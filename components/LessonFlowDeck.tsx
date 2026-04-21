@@ -54,12 +54,23 @@ const partDescriptions: Record<ProblemPart, string> = {
   check: "Audit common mistakes and set challenge follow-up.",
 };
 
+type PresenterPoint = {
+  bullet: string;
+  expansion?: string[];
+};
+
+type PresenterPointGroup = {
+  heading: string;
+  points: PresenterPoint[];
+};
+
 export function LessonFlowDeck() {
   const [audience, setAudience] = useState<AudienceMode>("presenter");
   const [showPresenterHelpers, setShowPresenterHelpers] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [problemPartIndex, setProblemPartIndex] = useState(0);
   const [traceLineIndex, setTraceLineIndex] = useState(0);
+  const [revealIndex, setRevealIndex] = useState(-1);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [checkStates, setCheckStates] = useState<
     Record<string, Record<string, boolean>>
@@ -97,6 +108,7 @@ export function LessonFlowDeck() {
     setActiveIndex(parsed - 1);
     setProblemPartIndex(0);
     setTraceLineIndex(0);
+    setRevealIndex(-1);
   }, [slides.length]);
 
   useEffect(() => {
@@ -107,6 +119,10 @@ export function LessonFlowDeck() {
 
   const activeSlide = slides[activeIndex];
   const progress = ((activeIndex + 1) / slides.length) * 100;
+
+  useEffect(() => {
+    setRevealIndex(-1);
+  }, [activeSlide.id]);
 
   const setAudienceMode = (mode: AudienceMode) => {
     setAudience(mode);
@@ -127,12 +143,14 @@ export function LessonFlowDeck() {
     setActiveIndex((value) => Math.max(0, value - 1));
     setProblemPartIndex(0);
     setTraceLineIndex(0);
+    setRevealIndex(-1);
   };
 
   const goNext = () => {
     setActiveIndex((value) => Math.min(slides.length - 1, value + 1));
     setProblemPartIndex(0);
     setTraceLineIndex(0);
+    setRevealIndex(-1);
   };
 
   const activeProblemSlug = activeSlide.kind === "problem" ? activeSlide.problem.problemSlug : "";
@@ -174,15 +192,87 @@ export function LessonFlowDeck() {
   const activeKey = `${activeSlide.id}-${audience}`;
   const noteText = notes[activeKey] ?? "";
 
-  const presenterTalkingPoints =
+  const legacyLessonPointGroups = (step: LessonStep): PresenterPointGroup[] => [
+    {
+      heading: "Coach script",
+      points: step.teacherNotes.map((note) => ({ bullet: note, expansion: [] })),
+    },
+    {
+      heading: "Student movement checks",
+      points: [
+        ...step.studentMoves.map((move) => ({ bullet: move, expansion: [] })),
+        ...step.checks.map((check) => ({ bullet: check, expansion: [] })),
+      ],
+    },
+    {
+      heading: "Correctness",
+      points: [
+        ...(step.invariant
+          ? [{ bullet: `Invariant: ${step.invariant}`, expansion: [] }]
+          : []),
+        ...(step.successCriteria
+          ? [{ bullet: `Success criteria: ${step.successCriteria}`, expansion: [] }]
+          : []),
+      ],
+    },
+    {
+      heading: "Common bugs to watch",
+      points: (
+        step.failurePatterns ??
+        step.commonFailurePatterns ??
+        []
+      ).map((failure) => ({ bullet: failure, expansion: [] })),
+    },
+    {
+      heading: "Checks and edge cases",
+      points: [
+        ...(step.sanityChecks ?? []).map((check) => ({ bullet: check, expansion: [] })),
+        ...(step.edgeCasePrompts ?? []).map((prompt) => ({
+          bullet: `Edge case: ${prompt}`,
+          expansion: [],
+        })),
+      ],
+    },
+  ].filter((group) => group.points.length > 0);
+
+  const legacyProblemPointGroups = (workshop: ProblemWorkshop): PresenterPointGroup[] => [
+    {
+      heading: "Coach script",
+      points: [{ bullet: workshop.coachScript, expansion: [] }],
+    },
+    {
+      heading: "Instructor focus",
+      points: [
+        ...(workshop.commonFailurePatterns
+          ? workshop.commonFailurePatterns.map((item) => ({ bullet: item, expansion: [] }))
+          : []),
+        ...(workshop.sanityChecks ?? []).map((check) => ({
+          bullet: check,
+          expansion: [],
+        })),
+      ],
+    },
+    {
+      heading: "Extra checks",
+      points: [
+        ...(workshop.edgeCasePrompts ?? []).map((prompt) => ({
+          bullet: `Edge case prompt: ${prompt}`,
+          expansion: [],
+        })),
+        ...(workshop.successCriteria
+          ? [{ bullet: `Success criteria: ${workshop.successCriteria}`, expansion: [] }]
+          : []),
+      ],
+    },
+  ].filter((group) => group.points.length > 0);
+
+  const presenterTalkingPointGroups: PresenterPointGroup[] =
     activeSlide.kind === "lesson"
-      ? [
-          ...activeSlide.step.teacherNotes,
-          ...activeSlide.step.studentMoves,
-          ...activeSlide.step.checks,
-        ]
+      ? (activeSlide.step.presenterTalkingPointGroups ??
+        legacyLessonPointGroups(activeSlide.step))
       : activeSlide.kind === "problem" && activeWorkshop
-        ? [activeWorkshop.coachScript]
+        ? (activeWorkshop.presenterTalkingPointGroups ??
+          legacyProblemPointGroups(activeWorkshop))
         : [];
 
   const lessonContext =
@@ -190,7 +280,27 @@ export function LessonFlowDeck() {
       ? activeSlide.step.studentContext.length
         ? activeSlide.step.studentContext
         : activeSlide.step.teacherNotes
-      : [];
+      : activeSlide.kind === "problem" && activeWorkshop
+        ? activeWorkshop.prompts
+        : [];
+
+  const visibleRevealItemCount = Math.max(
+    0,
+    Math.min(revealIndex + 1, lessonContext.length),
+  );
+  const revealItems = lessonContext.slice(0, visibleRevealItemCount);
+  const canRevealMore = lessonContext.length > visibleRevealItemCount;
+
+  const revealNext = () => {
+    if (!lessonContext.length) return;
+    setRevealIndex((value) => Math.min(value + 1, lessonContext.length - 1));
+  };
+
+  const revealReset = () => {
+    setRevealIndex(-1);
+  };
+
+  const revealTitle = activeSlide.kind === "lesson" ? "Teaching points" : "Prompts";
 
   return (
     <main className="page">
@@ -246,13 +356,14 @@ export function LessonFlowDeck() {
           <ol className="timeline-list">
             {slides.map((slide, index) => (
               <li key={slide.id}>
-                <button
+                  <button
                   type="button"
                   className={`timeline-item ${index === activeIndex ? "timeline-item--active" : ""}`}
                   onClick={() => {
                     setActiveIndex(index);
                     setProblemPartIndex(0);
                     setTraceLineIndex(0);
+                    setRevealIndex(-1);
                   }}
                 >
                   <span>{slide.tag}</span>
@@ -281,9 +392,34 @@ export function LessonFlowDeck() {
                   {activeSlide.step.objective}
                 </p>
                 <section className="content-section workshop-checks">
-                  {lessonContext.map((point) => (
-                    <p key={`${activeSlide.id}-context-${point}`}>{point}</p>
-                  ))}
+                  <div className="reveal-controls">
+                    <p className="section-subtitle">
+                      {revealTitle}: {visibleRevealItemCount} of {lessonContext.length}
+                    </p>
+                    <div className="reveal-controls__actions">
+                      <button
+                        type="button"
+                        className="problem-card__action"
+                        onClick={revealNext}
+                        disabled={!canRevealMore}
+                      >
+                        Reveal next
+                      </button>
+                      <button
+                        type="button"
+                        className="problem-card__action"
+                        onClick={revealReset}
+                        disabled={visibleRevealItemCount <= 0}
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                  <div className="workshop-reveal-list">
+                    {revealItems.map((point, index) => (
+                      <p key={`${activeSlide.id}-context-${index}`}>{point}</p>
+                    ))}
+                  </div>
                 </section>
               </>
             ) : null}
@@ -326,17 +462,45 @@ export function LessonFlowDeck() {
                 </section>
                 <p className="section-subtitle">{partDescriptions[problemPart]}</p>
                 <section className="content-section workshop-checks">
-                  <h4>Planning checkpoints</h4>
-                  {activeWorkshop.prompts.map((prompt) => (
-                    <label key={`${activeWorkshop.problemSlug}-${prompt}`} className="check-item">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(currentProblemState[prompt])}
-                        onChange={() => toggleProblemCheck(prompt)}
-                      />
-                      {prompt}
-                    </label>
-                  ))}
+                  <div className="reveal-controls">
+                    <p className="section-subtitle">
+                      {revealTitle}: {visibleRevealItemCount} of {lessonContext.length}
+                    </p>
+                    <div className="reveal-controls__actions">
+                      <button
+                        type="button"
+                        className="problem-card__action"
+                        onClick={revealNext}
+                        disabled={!canRevealMore}
+                      >
+                        Reveal next
+                      </button>
+                      <button
+                        type="button"
+                        className="problem-card__action"
+                        onClick={revealReset}
+                        disabled={visibleRevealItemCount <= 0}
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                  <h4>Planning prompts</h4>
+                  <div className="workshop-reveal-list">
+                    {revealItems.map((prompt, index) => (
+                      <label
+                        key={`${activeWorkshop.problemSlug}-${index}`}
+                        className="check-item"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(currentProblemState[prompt])}
+                          onChange={() => toggleProblemCheck(prompt)}
+                        />
+                        {prompt}
+                      </label>
+                    ))}
+                  </div>
                 </section>
                 <section className="content-section workshop-trace">
                   <h4>Trace walkthrough</h4>
@@ -420,14 +584,43 @@ export function LessonFlowDeck() {
               </>
             ) : null}
 
-            {audience === "presenter" && showPresenterHelpers && presenterTalkingPoints.length ? (
+            {audience === "presenter" && showPresenterHelpers && presenterTalkingPointGroups.length ? (
               <section className="content-section detail-pane detail-pane--presenter">
                 <h4>Presenter talking points</h4>
-                <ul>
-                  {presenterTalkingPoints.map((point) => (
-                    <li key={`${activeSlide.id}-talking-point-${point}`}>{point}</li>
+                <div className="talking-point-groups">
+                  {presenterTalkingPointGroups.map((group, groupIndex) => (
+                    <details key={`${activeSlide.id}-group-${groupIndex}`} className="talking-point-group">
+                      <summary className="talking-point-group__summary">
+                        {group.heading}
+                      </summary>
+                      <ul className="talking-point-group__items">
+                        {group.points.map((point, pointIndex) => (
+                          <li
+                            key={`${activeSlide.id}-point-${groupIndex}-${pointIndex}`}
+                            className="talking-point"
+                          >
+                            {point.expansion?.length ? (
+                              <details>
+                                <summary>{point.bullet}</summary>
+                                <ul>
+                                  {point.expansion.map((expansion, expansionIndex) => (
+                                    <li
+                                      key={`${activeSlide.id}-expansion-${groupIndex}-${pointIndex}-${expansionIndex}`}
+                                    >
+                                      {expansion}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </details>
+                            ) : (
+                              point.bullet
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   ))}
-                </ul>
+                </div>
               </section>
             ) : null}
 

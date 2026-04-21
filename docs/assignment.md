@@ -1,15 +1,29 @@
-Complete the four sliding-window practice problems from today’s handout.
+# Sliding Window Assignment
+
+Complete all four workshop problems from this lesson deck.
 
 For each problem, submit:
-A short explanation of your approach in plain English.
-Your Python solution.
-At least one test case you created yourself.
-A brief note explaining whether the problem used a fixed-size or variable-size window.
+
+- Problem slug and chosen window type (`fixed-size` or `variable-size`).
+- A one-sentence invariant for your chosen window.
+- A one-line complexity statement in plain English (`O(n)` and why).
+- A minimum state list (fixed-size: `window_sum`, `best`, `left`, `k`; variable-size: `left`, `right`, `current_sum`, answer state).
+- 3 edge checks you would run first (including at least one impossible/empty case when relevant).
+- A short explanation of your approach.
+- Your Python solution.
+
+Required edge-case set to include:
+
+- `k > n`
+- `k = 0`
+- impossible-target or missing-required scenarios
+- duplicate-heavy inputs where counts matter
+- one case needing multi-step shrink
 
 Work expectations:
 
-Problems 1 and 2 should be completed by everyone.
-Problem 3 should be attempted by everyone.
-Problem 4 is the challenge problem. Try it after completing the first three.
+- Problem 1 and Problem 2: required for everyone.
+- Problem 3: required for everyone.
+- Problem 4: challenge problem after first three.
 
-You may work with a partner during class, but each student must submit their own explanation and code.
+You may work with a partner, but submit your own explanation and code.

@@ -543,6 +543,20 @@ pre {
   gap: 0.5rem;
 }
 
+.reveal-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.reveal-controls__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
 .content-section {
   display: grid;
   gap: 0.65rem;
@@ -602,6 +616,15 @@ pre {
   margin: 0.35rem 0;
 }
 
+.workshop-reveal-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.workshop-reveal-list .check-item {
+  margin-top: 0.08rem;
+}
+
 .workshop-code,
 .workshop-trace,
 .notes-workspace {
@@ -638,6 +661,46 @@ pre {
 
 .detail-pane--presenter h4 {
   color: #ffffff;
+}
+
+.talking-point-groups {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.talking-point-group {
+  padding: 0.28rem 0.45rem 0.45rem;
+  border: 1px solid #4d4d4d;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.talking-point-group__summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #ffe6a8;
+}
+
+.talking-point-group__items {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.talking-point {
+  color: #ffffff;
+}
+
+.talking-point details {
+  margin: 0;
+}
+
+.talking-point summary {
+  cursor: pointer;
+}
+
+.talking-point ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
 }
 
 .timeline-list,

@@ -22,6 +22,8 @@
 - `components/LessonFlowDeck.tsx`: presenter/student views now share the same visible slide context by default, with optional Presenter talking points for private delivery cues.
 - `data/lessonFlow.ts`: new lesson flow content model driven by the 2-hour lesson outline.
 - `app/globals.css`: new deck, timeline, and studio styles.
+- `components/LessonFlowDeck.tsx`: reveal behavior now supports slide-by-slide reveal progression for student/context prompts on both lesson and problem sections.
+- `data/lessonFlow.ts`: expanded Problem 1 state example and enriched grouped presenter talking points with concrete class-ready expansion detail.
 
 ## Acceptance Tests
 - Load page in browser and verify:
@@ -36,6 +38,7 @@
 - In this implementation, students and presenter share the same lesson and problem content by default.
 - Presenter-only talking points are isolated to a toggle in Presenter mode.
 - Problem slide information is not gated by part; part controls remain for pacing and guided walkthrough.
+- Presenters can advance student prompts one bullet at a time and reset to no-prompt start on slide changes for classroom pacing.
 
 ## Assumptions
 - No backend sync is required in this iteration (students load same slide deck and follow manually while the instructor screenshares).
