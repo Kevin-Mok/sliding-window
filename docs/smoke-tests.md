@@ -9,6 +9,7 @@
 - **Expected**:
   - In base mode, both views show the same slide content needed to understand the problem or teaching point.
   - On Presenter view, **Presenter talking points** can be toggled on to show private delivery prompts only.
+  - On lesson slides, students see only the shared student-facing context text, while presenter points are hidden unless helpers are enabled.
   - In Student view, talking points controls are not shown and only shared content remains.
 
 ### Problem section flow

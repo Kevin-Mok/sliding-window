@@ -176,7 +176,11 @@ export function LessonFlowDeck() {
 
   const presenterTalkingPoints =
     activeSlide.kind === "lesson"
-      ? activeSlide.step.teacherNotes
+      ? [
+          ...activeSlide.step.teacherNotes,
+          ...activeSlide.step.studentMoves,
+          ...activeSlide.step.checks,
+        ]
       : activeSlide.kind === "problem" && activeWorkshop
         ? [activeWorkshop.coachScript]
         : [];
@@ -277,29 +281,9 @@ export function LessonFlowDeck() {
                   {activeSlide.step.objective}
                 </p>
                 <section className="content-section workshop-checks">
-                  <h4>Lesson context</h4>
-                  <ul>
-                    {lessonContext.map((point) => (
-                      <li key={`${activeSlide.id}-context-${point}`}>{point}</li>
-                    ))}
-                  </ul>
-                </section>
-                <section className="content-section workshop-checks">
-                  <h4>Student activity</h4>
-                  <ul>
-                    {activeSlide.step.studentMoves.map((move) => (
-                      <li key={`${activeSlide.id}-student-${move}`}>{move}</li>
-                    ))}
-                  </ul>
-                </section>
-
-                <section className="content-section workshop-checks">
-                  <h4>Checks to ask</h4>
-                  <ul>
-                    {activeSlide.step.checks.map((check) => (
-                      <li key={`${activeSlide.id}-check-${check}`}>{check}</li>
-                    ))}
-                  </ul>
+                  {lessonContext.map((point) => (
+                    <p key={`${activeSlide.id}-context-${point}`}>{point}</p>
+                  ))}
                 </section>
               </>
             ) : null}

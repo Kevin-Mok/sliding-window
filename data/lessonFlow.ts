@@ -54,12 +54,9 @@ export const lessonFlow: LessonFlowSummary = {
       objective:
         "Let students experience overlap in consecutive-group problems before coding.",
       studentContext: [
-        "Display: [4, 2, 7, 1, 8, 3] and ask for best sum of 3 consecutive days.",
-        "Invite one student volunteer for each window sum.",
-        "Ask what changed when moving from [4,2,7] to [2,7,1].",
+        "What is the best sum of 3 consecutive days [4, 2, 7, 1, 8, 3]?",
       ],
       teacherNotes: [
-        "Display: [4, 2, 7, 1, 8, 3] and ask for best sum of 3 consecutive days.",
         "Invite one student volunteer for each window sum.",
         "Ask what changed when moving from [4,2,7] to [2,7,1].",
       ],
@@ -81,11 +78,8 @@ export const lessonFlow: LessonFlowSummary = {
         "Create the mental model of a moving frame over consecutive data.",
       studentContext: [
         "Draw a long row of numbers and a 3-cell frame over them.",
-        "Slide the frame one step right and highlight only the entering/leaving items.",
-        "State: 'Do not rebuild; update the old answer.'",
       ],
       teacherNotes: [
-        "Draw a long row of numbers and a 3-cell frame over them.",
         "Slide the frame one step right and highlight only the entering/leaving items.",
         "State: 'Do not rebuild; update the old answer.'",
       ],
@@ -103,11 +97,8 @@ export const lessonFlow: LessonFlowSummary = {
       objective: "Teach fixed-size formula and pointer movement.",
       studentContext: [
         "Show the update rule: `new = old - left + right`.",
-        "Use one warm example where k=3.",
-        "Connect every movement to a story: one value leaves, one enters.",
       ],
       teacherNotes: [
-        "Show the update rule: `new = old - left + right`.",
         "Use one warm example where k=3.",
         "Connect every movement to a story: one value leaves, one enters.",
       ],
@@ -125,11 +116,8 @@ export const lessonFlow: LessonFlowSummary = {
       objective: "Apply fixed-size window with a complete coding pass.",
       studentContext: [
         "Code Problem 1 live from starter to final.",
-        "Pause at three checkpoints: window initialization, slide, best update.",
-        "Ask why the for-loop starts at `k`.",
       ],
       teacherNotes: [
-        "Code Problem 1 live from starter to final.",
         "Pause at three checkpoints: window initialization, slide, best update.",
         "Ask why the for-loop starts at `k`.",
       ],
@@ -150,11 +138,8 @@ export const lessonFlow: LessonFlowSummary = {
         "Classify prompts and decide window type before choosing data structures.",
       studentContext: [
         "Show three examples: fixed sum, shortest-at-least target, at-most/k chars.",
-        "Students classify first, code later.",
-        "Correct them when clues point to variable-size windows.",
       ],
       teacherNotes: [
-        "Show three examples: fixed sum, shortest-at-least target, at-most/k chars.",
         "Students classify first, code later.",
         "Correct them when clues point to variable-size windows.",
       ],
@@ -172,11 +157,8 @@ export const lessonFlow: LessonFlowSummary = {
       objective: "Explain why one pointer can move many times while the other waits.",
       studentContext: [
         "Trace [2, 3, 1, 2, 4, 3], target=7 with a board.",
-        "Use the language: 'right expands, left contracts only while valid.'",
-        "Demonstrate why `while` is required during contraction.",
       ],
       teacherNotes: [
-        "Trace [2, 3, 1, 2, 4, 3], target=7 with a board.",
         "Use the language: 'right expands, left contracts only while valid.'",
         "Demonstrate why `while` is required during contraction.",
       ],
@@ -197,11 +179,8 @@ export const lessonFlow: LessonFlowSummary = {
         "Give students space to solve while the teacher monitors misconceptions.",
       studentContext: [
         "Tell students: Problem 1 and 2 are required, Problem 3 is expected, 4 is optional challenge.",
-        "Circulate and keep asking: window definition, what state is maintained, when pointers move.",
-        "Mark common pitfalls on the side as students present them.",
       ],
       teacherNotes: [
-        "Tell students: Problem 1 and 2 are required, Problem 3 is expected, 4 is optional challenge.",
         "Circulate and keep asking: window definition, what state is maintained, when pointers move.",
         "Mark common pitfalls on the side as students present them.",
       ],
@@ -220,11 +199,8 @@ export const lessonFlow: LessonFlowSummary = {
         "Consolidate templates for fixed and variable window problems.",
       studentContext: [
         "Recap both templates: fixed-size and variable-size.",
-        "Have students share one bug and one fix.",
-        "Preview exit ticket and confusion points.",
       ],
       teacherNotes: [
-        "Recap both templates: fixed-size and variable-size.",
         "Have students share one bug and one fix.",
         "Preview exit ticket and confusion points.",
       ],
