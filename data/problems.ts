@@ -38,7 +38,7 @@ export const problems: SlidingWindowProblem[] = [
 k = 3`,
     sampleOutput: "16",
     pythonSolution: `def best_k_day_steps(steps: list[int], k: int) -> int | None:
-    # Fixed-size window: it must have at least 1 day
+    # Fixed-size sliding window: it must have at least 1 day
     # and cannot be longer than the list.
     if k <= 0 or k > len(steps):
         return None
@@ -50,8 +50,9 @@ k = 3`,
     # Slices stop before the end index, so \`right + 1\`
     # includes the full first window.
     cur_total_steps = sum(steps[left:right + 1])
-    # Start with the first full fixed-size window,
-    # then compare later windows against it.
+    # Build the first full window once.
+    # After that, sliding window means we reuse this total
+    # instead of summing every k-day block from scratch.
     best_total_steps = cur_total_steps
     # Stop once \`right\` is at the last index;
     # sliding again would step past the array.
@@ -60,10 +61,13 @@ k = 3`,
         # then add the new right value.
         # That order keeps the window size at k
         # and avoids off-by-one mistakes.
+        # Only one value leaves and one value enters,
+        # which is the main sliding-window idea.
         cur_total_steps -= steps[left]
         left += 1
         right += 1
         cur_total_steps += steps[right]
+        # Compare this reused window total against the best answer so far.
         best_total_steps = max(best_total_steps, cur_total_steps)
 
     return best_total_steps`,
@@ -112,19 +116,30 @@ target = 7`,
     sampleOutput: "2",
     pythonSolution: `def shortest_study_sprint(blocks, target):
     left = 0
+    # This is the running total for the current window
+    # from \`left\` through \`right\`.
     current_sum = 0
+    # Sentinel: if this never changes, no valid window exists.
     best_length = len(blocks) + 1
 
     for right in range(len(blocks)):
+        # Expand the window by taking in the new right value.
         current_sum += blocks[right]
 
+        # Variable-size sliding window:
+        # while this window already meets the target,
+        # keep shrinking from the left to search for a shorter valid answer.
         while current_sum >= target:
+            # Measure the current valid window before we shrink it.
             current_length = right - left + 1
             best_length = min(best_length, current_length)
 
+            # Remove the old left value, then move left forward.
+            # This reuses the previous window total instead of rescanning.
             current_sum -= blocks[left]
             left += 1
 
+    # If the sentinel never changed, no consecutive block reached the target.
     if best_length == len(blocks) + 1:
         return 0
 
