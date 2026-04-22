@@ -89,17 +89,18 @@ export const lessonFlow: LessonFlowSummary = {
     { kind: "problem", problemSlug: "best-k-day-step-streak" },
     { kind: "lesson", lessonStepId: "fixed-proof" },
     { kind: "lesson", lessonStepId: "pattern-decision" },
-    { kind: "problem", problemSlug: "shortest-study-sprint" },
     { kind: "lesson", lessonStepId: "variable-demo" },
+    { kind: "problem", problemSlug: "shortest-study-sprint" },
     { kind: "lesson", lessonStepId: "invariant" },
     { kind: "problem", problemSlug: "longest-club-code-with-limited-symbols" },
+    { kind: "lesson", lessonStepId: "exit-ticket-homework-bridge" },
   ],
   lessonSteps: [
     {
       id: "recognize-constraint",
       title: "Pick window type first",
-      titleTag: "0-4 min",
-      durationMinutes: 4,
+      titleTag: "0-5 min",
+      durationMinutes: 5,
       objective:
         "Choose fixed-size or variable-size before any code, using wording only.",
       studentContext: [
@@ -205,8 +206,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "derive-state",
       title: "Track minimum state only",
-      titleTag: "10 min",
-      durationMinutes: 10,
+      titleTag: "5-13 min",
+      durationMinutes: 8,
       objective:
         "Keep only the state fields that are updated in O(1) each pointer move.",
       studentContext: [
@@ -315,8 +316,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "invariant",
       title: "Add one sentence invariant",
-      titleTag: "10 min",
-      durationMinutes: 10,
+      titleTag: "83-91 min",
+      durationMinutes: 8,
       objective:
         "Use one short invariant sentence to prevent silent pointer mistakes.",
       studentContext: [
@@ -400,8 +401,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "fixed-proof",
       title: "Simple linear-time proof",
-      titleTag: "10 min",
-      durationMinutes: 10,
+      titleTag: "35-42 min",
+      durationMinutes: 7,
       objective:
         "Explain runtime with index entry/exit count for fixed-size only.",
       studentContext: [
@@ -480,8 +481,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "pattern-decision",
       title: "If vs while and trigger rule",
-      titleTag: "10 min",
-      durationMinutes: 10,
+      titleTag: "42-50 min",
+      durationMinutes: 8,
       objective: "Choose if/while from whether shrink can happen many times at once.",
       studentContext: [
         "Fixed example: k fixed = no shrink loop needed in every right step.",
@@ -627,6 +628,63 @@ export const lessonFlow: LessonFlowSummary = {
         "Best candidate is tested before each final invalid move.",
       ],
       edgeCasePrompts: ["multi-shrink trace", "duplicate runs", "long valid chain then drop"],
+    },
+    {
+      id: "exit-ticket-homework-bridge",
+      title: "Exit ticket + homework bridge",
+      titleTag: "117-120 min",
+      durationMinutes: 3,
+      objective: "Consolidate all three in-class patterns and set clear homework language for minimum coverage windows.",
+      studentContext: [
+        "Write the shared add-shrink-best control structure in one line.",
+        "Classify one prompt each for exact-k, target sum, and distinct limit.",
+        "For homework, describe validity before code in one sentence.",
+      ],
+      teacherNotes: [
+        "Ask for a 3-line exit ticket: template, trigger, best-update timing.",
+        "Ask one team for each pattern: fixed, sum target, and count-based validity.",
+        "Frame homework by mapping `smallest-announcement-clip` to coverage trigger + same shrink timing.",
+      ],
+      studentMoves: [
+        "Complete a 3-line exit ticket before leaving the room.",
+        "Name one homework validity condition before looking at code.",
+      ],
+      checks: [
+        "Students can state fixed/variable, choose if/while, and place best update before breakage.",
+      ],
+      presenterTalkingPointGroups: [
+        {
+          heading: "Homework bridge",
+          points: [
+            {
+              bullet: "Summarize the shared flow in one sentence.",
+              expansion: [
+                "Every problem today follows add, optional repeated shrink, then best update while valid.",
+                "Then move right again only when the row is stable again.",
+                "This flow is unchanged across fixed, target, and count-based problems.",
+              ],
+            },
+            {
+              bullet: "Set homework expectation.",
+              expansion: [
+                "Do not copy problem 3 code.",
+                "Start from coverage validity: all required chars currently inside the window.",
+                "Add `needed/have` checks before reusing the same shrink rhythm.",
+              ],
+            },
+          ],
+        },
+      ],
+      invariant:
+        "All in-class patterns reuse a single expand-check-shrink-best loop with different validity predicates.",
+      successCriteria:
+        "Students complete the exit ticket using the right control-flow language and a valid homework intent.",
+      commonFailurePatterns: [
+        "Trying to patch code before naming validity for homework.",
+        "Reusing if when the homework can require repeated shrink moves.",
+      ],
+      sanityChecks: ["Three-line exit ticket is written and shared by the whole class."],
+      edgeCasePrompts: ["minimum coverage not currently satisfied", "one extra shrink", "exact length vs minimum length confusion"],
     },
     {
       id: "independent-practice",
@@ -942,7 +1000,7 @@ export const lessonFlow: LessonFlowSummary = {
       workPhaseTimings: {
         precontextMinutes: 3,
         workMinutes: 10,
-        explanationMinutes: 9,
+        explanationMinutes: 10,
       },
       precontextPrompts: [
         "Classify this as variable-size and label the trigger in words.",
@@ -1093,9 +1151,9 @@ export const lessonFlow: LessonFlowSummary = {
       studentGoal:
         "Find longest substring containing at most `k` distinct characters.",
       workPhaseTimings: {
-        precontextMinutes: 3,
+        precontextMinutes: 4,
         workMinutes: 10,
-        explanationMinutes: 9,
+        explanationMinutes: 12,
       },
       precontextPrompts: [
         "Classify this as variable-size with distinct-count constraint.",
