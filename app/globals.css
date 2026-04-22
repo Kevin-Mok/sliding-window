@@ -340,24 +340,33 @@ pre {
 }
 
 .token-keyword {
-  color: #ffffff;
+  color: #b392f0;
   font-weight: 700;
 }
 
 .token-builtin {
-  color: #ffffff;
+  color: #56d4dd;
 }
 
 .token-number {
-  color: #ffffff;
+  color: #ef9a9a;
 }
 
 .token-string {
-  color: #ffffff;
+  color: #86d18a;
 }
 
 .token-comment {
   color: #a9a9a9;
+  font-style: italic;
+}
+
+.token-function {
+  color: #f6c177;
+}
+
+.token-operator {
+  color: #f4b5d3;
 }
 
 .visualizer {

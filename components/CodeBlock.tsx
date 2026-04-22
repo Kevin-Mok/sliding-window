@@ -11,27 +11,59 @@ const escapeHtml = (text: string) => {
 
 const highlightCode = (code: string) => {
   const escaped = escapeHtml(code);
+  const tokenMap: Record<string, string> = {};
+  let tokenIndex = 0;
+  const makeToken = (html: string) => {
+    const key = String.fromCharCode(0xE001 + tokenIndex);
+    tokenMap[key] = html;
+    tokenIndex += 1;
+    return key;
+  };
 
-  const withStrings = escaped
+  let highlighted = escaped
     .replace(
       /&quot;([^&]|&amp;|&quot;)*?&quot;|'([^'\\]|\\.)*?'/g,
-      `<span class="token token-string">$&</span>`
+      (match) => {
+        return makeToken(`<span class="token token-string">${match}</span>`);
+      }
+    )
+    .replace(/(#.*)$/gm, (match) => {
+      return makeToken(`<span class="token token-comment">${match}</span>`);
+    })
+    .replace(
+      /\b(as|assert|async|await|break|class|continue|def|elif|else|except|False|for|from|global|if|import|in|is|lambda|nonlocal|None|not|or|pass|raise|return|True|try|while|with|yield)\b/g,
+      (match) => {
+        return makeToken(`<span class="token token-keyword">${match}</span>`);
+      }
     )
     .replace(
-      /(#.*)$/gm,
-      `<span class="token token-comment">$1</span>`
+      /\b(abs|all|any|chr|dict|enumerate|float|int|len|list|map|max|min|open|print|range|sorted|str|sum|tuple|type|zip)\b/g,
+      (match) => {
+        return makeToken(`<span class="token token-builtin">${match}</span>`);
+      }
     )
     .replace(
-      /\b(def|return|for|while|if|in|else|elif|and|or|not|is|None|True|False|break|continue)\b/g,
-      `<span class="token token-keyword">$1</span>`
+      /\b([A-Za-z_][A-Za-z0-9_]*)\s*(?=\()/g,
+      (match, identifier) => {
+        return makeToken(`<span class="token token-function">${identifier}</span>`);
+      }
     )
     .replace(
-      /\b(len|get|range|sum|enumerate|float|dict)\b/g,
-      `<span class="token token-builtin">$1</span>`
+      /\b\d+(?:\.\d+)?\b/g,
+      (match) => {
+        return makeToken(`<span class="token token-number">${match}</span>`);
+      }
     )
-    .replace(/\b\d+\b/g, `<span class="token token-number">$&</span>`);
+    .replace(/(\+|\-|\*|\/|%|==|!=|<=|>=|=|<|>)/g, (match) => {
+      return makeToken(`<span class="token token-operator">${match}</span>`);
+    });
 
-  return withStrings;
+  const tokenized = highlighted.replace(
+    /[\uE001-\uF8FF]/g,
+    (token) => tokenMap[token] || ""
+  );
+
+  return tokenized;
 };
 
 export function CodeBlock({ code }: CodeBlockProps) {
