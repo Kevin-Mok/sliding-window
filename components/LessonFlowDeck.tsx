@@ -7,10 +7,11 @@ import {
   lessonFlow,
   type LessonStep,
   type ProblemWorkshop,
+  workshopOrder,
 } from "../data/lessonFlow";
 
 type AudienceMode = "presenter" | "student";
-type ProblemPart = "understand" | "plan" | "trace" | "build" | "check";
+type ProblemPhase = "precontext" | "student-work" | "explanation";
 
 type LessonSlide =
   | {
@@ -20,6 +21,7 @@ type LessonSlide =
       step: LessonStep;
       problem?: never;
       tag: string;
+      timing?: string;
     }
   | {
       kind: "problem";
@@ -28,31 +30,37 @@ type LessonSlide =
       step?: never;
       problem: ProblemWorkshop;
       tag: string;
+      phase: ProblemPhase;
+      timing?: string;
     };
 
-const problemParts: ProblemPart[] = [
-  "understand",
-  "plan",
-  "trace",
-  "build",
-  "check",
-];
-
-const partLabels: Record<ProblemPart, string> = {
-  understand: "Understand",
-  plan: "Plan",
-  trace: "Trace",
-  build: "Build",
-  check: "Check",
+const problemPhaseMeta: Record<
+  ProblemPhase,
+  { label: string; revealTitle: string; navLabel: string; titleSummary: string }
+> = {
+  precontext: {
+    label: "Instructor launch: context and edge checks",
+    revealTitle: "Precontext prompts",
+    navLabel: "Precontext",
+    titleSummary: "Classify, edge checks, setup",
+  },
+  "student-work": {
+    label: "Students: 10-minute guided work",
+    revealTitle: "Student work prompts",
+    navLabel: "Student work",
+    titleSummary: "Work time, hints, trace",
+  },
+  explanation: {
+    label: "Instructor explanation: why this template works",
+    revealTitle: "Instructor explanation prompts",
+    navLabel: "Explanation",
+    titleSummary: "Walkthrough, fixes, takeaways",
+  },
 };
 
-const partDescriptions: Record<ProblemPart, string> = {
-  understand: "Read statement, identify inputs, and choose fixed/variable.",
-  plan: "Map pointers and running state before coding.",
-  trace: "Walk through live traces and predict window updates.",
-  build: "Review solution lines and what each line changes.",
-  check: "Audit common mistakes and set challenge follow-up.",
-};
+const problemPhaseOrder: ProblemPhase[] = ["precontext", "student-work", "explanation"];
+
+const openingLessonCount = 1;
 
 type PresenterPoint = {
   bullet: string;
@@ -68,7 +76,6 @@ export function LessonFlowDeck() {
   const [audience, setAudience] = useState<AudienceMode>("presenter");
   const [showPresenterHelpers, setShowPresenterHelpers] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [problemPartIndex, setProblemPartIndex] = useState(0);
   const [traceLineIndex, setTraceLineIndex] = useState(0);
   const [revealIndex, setRevealIndex] = useState(-1);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -76,26 +83,48 @@ export function LessonFlowDeck() {
     Record<string, Record<string, boolean>>
   >({});
 
-  const slides = useMemo(() => {
+  const slides = useMemo<LessonSlide[]>(() => {
+    const workshopSlides: LessonSlide[] = lessonFlow.problemWorkshops.flatMap(
+      (workshop, index) => {
+        const precontextMinutes = workshop.workPhaseTimings?.precontextMinutes ?? 4;
+        const workMinutes = workshop.workPhaseTimings?.workMinutes ?? 10;
+        const explanationMinutes = workshop.workPhaseTimings?.explanationMinutes ?? 8;
+
+        return problemPhaseOrder.map(
+          (phase): LessonSlide => {
+            const timing =
+              phase === "precontext"
+                ? `${precontextMinutes} min`
+                : phase === "student-work"
+                  ? `${workMinutes} min`
+                  : `${explanationMinutes} min`;
+            const phaseMeta = problemPhaseMeta[phase];
+
+            return {
+              kind: "problem",
+              id: `problem-${workshop.problemSlug}-${phase}`,
+              title: `Problem ${index + 1}: ${phaseMeta.titleSummary}`,
+              tag: `Problem ${index + 1} • ${phaseMeta.navLabel} (${timing})`,
+              problem: workshop,
+              phase,
+              timing,
+            };
+          },
+        );
+      },
+    );
     const lessonSlides: LessonSlide[] = lessonFlow.lessonSteps.map((step, index) => ({
       kind: "lesson",
       id: `lesson-${step.id}`,
       title: step.title,
       tag: step.titleTag ?? `Section ${index + 1}`,
       step,
+      timing: step.durationMinutes ? `${step.durationMinutes} min` : undefined,
     }));
+    const openingLessonSlides = lessonSlides.slice(0, openingLessonCount);
+    const closingLessonSlides = lessonSlides.slice(openingLessonCount);
 
-    const problemSlides: LessonSlide[] = lessonFlow.problemWorkshops.map(
-      (workshop, index) => ({
-        kind: "problem",
-        id: `problem-${workshop.problemSlug}`,
-        title: `Problem ${index + 1}: ${workshop.studentGoal}`,
-        tag: `Problem ${index + 1}`,
-        problem: workshop,
-      }),
-    );
-
-    return [...lessonSlides, ...problemSlides];
+    return [...openingLessonSlides, ...workshopSlides, ...closingLessonSlides];
   }, []);
 
   useEffect(() => {
@@ -106,7 +135,6 @@ export function LessonFlowDeck() {
       return;
     }
     setActiveIndex(parsed - 1);
-    setProblemPartIndex(0);
     setTraceLineIndex(0);
     setRevealIndex(-1);
   }, [slides.length]);
@@ -141,14 +169,12 @@ export function LessonFlowDeck() {
 
   const goPrevious = () => {
     setActiveIndex((value) => Math.max(0, value - 1));
-    setProblemPartIndex(0);
     setTraceLineIndex(0);
     setRevealIndex(-1);
   };
 
   const goNext = () => {
     setActiveIndex((value) => Math.min(slides.length - 1, value + 1));
-    setProblemPartIndex(0);
     setTraceLineIndex(0);
     setRevealIndex(-1);
   };
@@ -158,7 +184,48 @@ export function LessonFlowDeck() {
     ? getProblemBySlug(activeProblemSlug)
     : undefined;
   const activeWorkshop = activeSlide.kind === "problem" ? activeSlide.problem : undefined;
-  const problemPart = problemParts[problemPartIndex];
+  const activeProblemIndex = activeProblemSlug
+    ? workshopOrder.indexOf(activeProblemSlug)
+    : -1;
+  const activeProblemPhaseIndex =
+    activeSlide.kind === "problem"
+      ? problemPhaseOrder.indexOf(activeSlide.phase)
+      : 0;
+  const isProblemExplanationPhase =
+    activeSlide.kind === "problem" && activeSlide.phase === "explanation";
+  const isProblemPromptPhaseForStudents =
+    activeSlide.kind === "problem" && activeSlide.phase !== "explanation";
+  const isProblemInstructorExplanationOnly =
+    isProblemExplanationPhase && audience === "presenter";
+  const showProblemPrompts =
+    activeSlide.kind !== "problem" ||
+    isProblemPromptPhaseForStudents ||
+    isProblemInstructorExplanationOnly;
+
+  const goToProblemPhase = (phaseIndex: number) => {
+    if (activeProblemIndex < 0) return;
+    const target = openingLessonCount + activeProblemIndex * problemPhaseOrder.length + phaseIndex;
+    if (target < openingLessonCount || target >= slides.length) return;
+    setActiveIndex(target);
+    setTraceLineIndex(0);
+    setRevealIndex(-1);
+  };
+
+  const getProblemPhasePrompts = (
+    workshop: ProblemWorkshop,
+    phase: ProblemPhase,
+  ): string[] => {
+    switch (phase) {
+      case "precontext":
+        return workshop.precontextPrompts ?? workshop.prompts ?? [];
+      case "student-work":
+        return workshop.studentWorkPrompts ?? workshop.prompts ?? [];
+      case "explanation":
+        return workshop.explanationPrompts ?? workshop.prompts ?? [];
+      default:
+        return workshop.prompts ?? [];
+    }
+  };
 
   const currentProblemState = activeProblemSlug
     ? checkStates[activeProblemSlug] ?? {}
@@ -266,14 +333,16 @@ export function LessonFlowDeck() {
     },
   ].filter((group) => group.points.length > 0);
 
-  const presenterTalkingPointGroups: PresenterPointGroup[] =
-    activeSlide.kind === "lesson"
-      ? (activeSlide.step.presenterTalkingPointGroups ??
-        legacyLessonPointGroups(activeSlide.step))
-      : activeSlide.kind === "problem" && activeWorkshop
-        ? (activeWorkshop.presenterTalkingPointGroups ??
-          legacyProblemPointGroups(activeWorkshop))
-        : [];
+  let presenterTalkingPointGroups: PresenterPointGroup[] = [];
+  if (activeSlide.kind === "lesson") {
+    presenterTalkingPointGroups =
+      activeSlide.step.presenterTalkingPointGroups ??
+      legacyLessonPointGroups(activeSlide.step);
+  } else if (activeSlide.kind === "problem" && activeWorkshop) {
+    presenterTalkingPointGroups =
+      activeWorkshop.presenterTalkingPointGroups ??
+      legacyProblemPointGroups(activeWorkshop);
+  }
 
   const lessonContext =
     activeSlide.kind === "lesson"
@@ -281,7 +350,9 @@ export function LessonFlowDeck() {
         ? activeSlide.step.studentContext
         : activeSlide.step.teacherNotes
       : activeSlide.kind === "problem" && activeWorkshop
-        ? activeWorkshop.prompts
+        ? showProblemPrompts
+          ? getProblemPhasePrompts(activeWorkshop, activeSlide.phase)
+          : []
         : [];
 
   const visibleRevealItemCount = Math.max(
@@ -300,7 +371,10 @@ export function LessonFlowDeck() {
     setRevealIndex(-1);
   };
 
-  const revealTitle = activeSlide.kind === "lesson" ? "Teaching points" : "Prompts";
+  const revealTitle =
+    activeSlide.kind === "lesson"
+      ? "Teaching points"
+      : problemPhaseMeta[activeSlide.phase].revealTitle;
 
   return (
     <main className="page">
@@ -356,12 +430,11 @@ export function LessonFlowDeck() {
           <ol className="timeline-list">
             {slides.map((slide, index) => (
               <li key={slide.id}>
-                  <button
+                <button
                   type="button"
                   className={`timeline-item ${index === activeIndex ? "timeline-item--active" : ""}`}
                   onClick={() => {
                     setActiveIndex(index);
-                    setProblemPartIndex(0);
                     setTraceLineIndex(0);
                     setRevealIndex(-1);
                   }}
@@ -444,126 +517,148 @@ export function LessonFlowDeck() {
                   </div>
                 </section>
                 <section className="problem-part-nav">
-                  {problemParts.map((part, index) => (
+                  {problemPhaseOrder.map((phase, index) => (
                     <button
-                      key={`${activeProblemSlug}-${part}`}
+                      key={`${activeProblemSlug}-${phase}`}
                       type="button"
                       className={`chip ${
-                        problemPartIndex === index ? "chip--active" : ""
+                        activeProblemPhaseIndex === index ? "chip--active" : ""
                       }`}
                       onClick={() => {
-                        setProblemPartIndex(index);
-                        setTraceLineIndex(0);
+                        goToProblemPhase(index);
                       }}
                     >
-                      {partLabels[part]}
+                      {problemPhaseMeta[phase].label}
                     </button>
                   ))}
                 </section>
-                <p className="section-subtitle">{partDescriptions[problemPart]}</p>
-                <section className="content-section workshop-checks">
-                  <div className="reveal-controls">
-                    <p className="section-subtitle">
-                      {revealTitle}: {visibleRevealItemCount} of {lessonContext.length}
-                    </p>
-                    <div className="reveal-controls__actions">
-                      <button
-                        type="button"
-                        className="problem-card__action"
-                        onClick={revealNext}
-                        disabled={!canRevealMore}
-                      >
-                        Reveal next
-                      </button>
-                      <button
-                        type="button"
-                        className="problem-card__action"
-                        onClick={revealReset}
-                        disabled={visibleRevealItemCount <= 0}
-                      >
-                        Reset
-                      </button>
+                <p className="section-subtitle">
+                  {problemPhaseMeta[activeSlide.phase].label}
+                </p>
+                {showProblemPrompts ? (
+                  <section className="content-section workshop-checks">
+                    <div className="reveal-controls">
+                      <p className="section-subtitle">
+                        {revealTitle}: {visibleRevealItemCount} of{" "}
+                        {lessonContext.length}
+                      </p>
+                      <div className="reveal-controls__actions">
+                        <button
+                          type="button"
+                          className="problem-card__action"
+                          onClick={revealNext}
+                          disabled={!canRevealMore}
+                        >
+                          Reveal next
+                        </button>
+                        <button
+                          type="button"
+                          className="problem-card__action"
+                          onClick={revealReset}
+                          disabled={visibleRevealItemCount <= 0}
+                        >
+                          Reset
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <h4>Planning prompts</h4>
-                  <div className="workshop-reveal-list">
-                    {revealItems.map((prompt, index) => (
-                      <label
-                        key={`${activeWorkshop.problemSlug}-${index}`}
-                        className="check-item"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={Boolean(currentProblemState[prompt])}
-                          onChange={() => toggleProblemCheck(prompt)}
-                        />
-                        {prompt}
-                      </label>
-                    ))}
-                  </div>
-                </section>
-                <section className="content-section workshop-trace">
-                  <h4>Trace walkthrough</h4>
-                  <div className="workshop-trace__controls">
-                    <button
-                      type="button"
-                      className="problem-card__action"
-                      onClick={() => setTraceLine(traceLineIndex - 1)}
-                      disabled={traceLineIndex === 0}
-                    >
-                      Previous line
-                    </button>
-                    <button
-                      type="button"
-                      className="problem-card__action"
-                      onClick={() => setTraceLine(traceLineIndex + 1)}
-                      disabled={
-                        !activeProblem.traceAscii ||
-                        traceLineIndex >= activeProblem.traceAscii.length - 1
-                      }
-                    >
-                      Next line
-                    </button>
-                  </div>
-                  <div className="visualizer__stream">
-                    {activeProblem.traceAscii
-                      .slice(0, traceLineIndex + 1)
-                      .map((line, index) => (
-                        <div key={`${activeProblem.slug}-trace-${index}`} className="visualizer__line">
-                          {line}
-                        </div>
+                    <h4>{problemPhaseMeta[activeSlide.phase].revealTitle}</h4>
+                    <div className="workshop-reveal-list">
+                      {revealItems.map((prompt, index) => (
+                        <label
+                          key={`${activeWorkshop.problemSlug}-${index}`}
+                          className="check-item"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={Boolean(currentProblemState[prompt])}
+                            onChange={() => toggleProblemCheck(prompt)}
+                          />
+                          {prompt}
+                        </label>
                       ))}
-                  </div>
-                  <p className="section-subtitle">
-                    Line {traceLineIndex + 1} of {activeProblem.traceAscii.length}
-                  </p>
-                </section>
-                <section className="content-section workshop-code">
-                  <h4>Reference implementation</h4>
-                  <CodeBlock code={activeProblem.pythonSolution} />
-                </section>
-                <section className="content-section workshop-checks">
-                  <h4>Checkpoint checklist</h4>
-                  {activeWorkshop.checkpoints.map((checkpoint) => (
-                    <label key={`${activeProblem.slug}-${checkpoint}`} className="check-item">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(currentProblemState[checkpoint])}
-                        onChange={() => toggleProblemCheck(checkpoint)}
-                      />
-                      {checkpoint}
-                    </label>
-                  ))}
-                  <h4>Common mistakes to watch</h4>
-                  <ul>
-                    {activeWorkshop.commonBugs.map((bug) => (
-                      <li key={`${activeWorkshop.problemSlug}-${bug}`}>{bug}</li>
-                    ))}
-                  </ul>
-                  <p className="muted">
-                    Stretch: {activeWorkshop.stretchQuestion}
-                  </p>
-                </section>
+                    </div>
+                  </section>
+                ) : null}
+                {activeSlide.phase === "explanation" && audience === "student" ? (
+                  <section className="content-section workshop-checks">
+                    <p className="muted">
+                      Instructor explanation details are shown only in presenter view.
+                    </p>
+                  </section>
+                ) : null}
+                {isProblemInstructorExplanationOnly ? (
+                  <>
+                    <section className="content-section workshop-trace">
+                      <h4>Trace walkthrough</h4>
+                      <div className="workshop-trace__controls">
+                        <button
+                          type="button"
+                          className="problem-card__action"
+                          onClick={() => setTraceLine(traceLineIndex - 1)}
+                          disabled={traceLineIndex === 0}
+                        >
+                          Previous line
+                        </button>
+                        <button
+                          type="button"
+                          className="problem-card__action"
+                          onClick={() => setTraceLine(traceLineIndex + 1)}
+                          disabled={
+                            !activeProblem.traceAscii ||
+                            traceLineIndex >= activeProblem.traceAscii.length - 1
+                          }
+                        >
+                          Next line
+                        </button>
+                      </div>
+                      <div className="visualizer__stream">
+                        {activeProblem.traceAscii
+                          .slice(0, traceLineIndex + 1)
+                          .map((line, index) => (
+                            <div
+                              key={`${activeProblem.slug}-trace-${index}`}
+                              className="visualizer__line"
+                            >
+                              {line}
+                            </div>
+                          ))}
+                      </div>
+                      <p className="section-subtitle">
+                        Line {traceLineIndex + 1} of{" "}
+                        {activeProblem.traceAscii.length}
+                      </p>
+                    </section>
+                    <section className="content-section workshop-code">
+                      <h4>Reference implementation</h4>
+                      <CodeBlock code={activeProblem.pythonSolution} />
+                    </section>
+                    <section className="content-section workshop-checks">
+                      <h4>Checkpoint checklist</h4>
+                      {activeWorkshop.checkpoints.map((checkpoint) => (
+                        <label
+                          key={`${activeProblem.slug}-${checkpoint}`}
+                          className="check-item"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={Boolean(currentProblemState[checkpoint])}
+                            onChange={() => toggleProblemCheck(checkpoint)}
+                          />
+                          {checkpoint}
+                        </label>
+                      ))}
+                      <h4>Common mistakes to watch</h4>
+                      <ul>
+                        {activeWorkshop.commonBugs.map((bug) => (
+                          <li key={`${activeWorkshop.problemSlug}-${bug}`}>{bug}</li>
+                        ))}
+                      </ul>
+                      <p className="muted">
+                        Stretch: {activeWorkshop.stretchQuestion}
+                      </p>
+                    </section>
+                  </>
+                ) : null}
                 {audience === "presenter" ? (
                   <section className="content-section notes-workspace">
                     <h4>Live notes</h4>
@@ -629,22 +724,27 @@ export function LessonFlowDeck() {
                 <button
                   type="button"
                   className="problem-card__action"
-                  onClick={() => setProblemPartIndex(Math.max(0, problemPartIndex - 1))}
-                  disabled={problemPartIndex === 0}
+                  onClick={() =>
+                    goToProblemPhase(Math.max(0, activeProblemPhaseIndex - 1))
+                  }
+                  disabled={activeProblemPhaseIndex === 0}
                 >
-                  Previous part
+                  Previous phase
                 </button>
                 <button
                   type="button"
                   className="problem-card__action"
                   onClick={() =>
-                    setProblemPartIndex(
-                      Math.min(problemParts.length - 1, problemPartIndex + 1)
+                    goToProblemPhase(
+                      Math.min(
+                        problemPhaseOrder.length - 1,
+                        activeProblemPhaseIndex + 1,
+                      ),
                     )
                   }
-                  disabled={problemPartIndex === problemParts.length - 1}
+                  disabled={activeProblemPhaseIndex === problemPhaseOrder.length - 1}
                 >
-                  Next part
+                  Next phase
                 </button>
               </div>
             ) : null}

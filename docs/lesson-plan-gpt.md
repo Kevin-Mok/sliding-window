@@ -187,6 +187,65 @@ Modify one solution so that it returns not just the answer, but also the startin
 
 # 3) 2-HOUR LESSON PLAN
 
+## 0–4 Minutes: Opener + Problem Rhythm Setup
+
+### Teacher Activity
+
+- Announce the fixed class rhythm:
+  - **Problem 1:** precontext 4 min, student work 10 min, explanation 8 min
+  - **Problem 2:** precontext 3 min, student work 10 min, explanation 9 min
+  - **Problem 3:** precontext 3 min, student work 10 min, explanation 9 min
+  - **Problem 4:** precontext 2 min, student work 10 min, explanation 10 min
+- Keep students in prompt-first mode during work blocks.
+- Clarify: hint checks are only in the work windows at ~3, ~6, and ~9 minutes.
+
+### Student Activity
+
+Students call out what changes between neighboring windows in one overlap example and note fixed vs variable language.
+
+### Goal
+
+Create one shared pacing contract before all problems.
+
+## 4–26 Minutes: Problem 1 Block (22 min)
+
+- **4–8 min Precontext:** classify Problem 1, edge-check (`k = 0`, `k > n`) and state template.
+- **8–18 min Student Work:** dry run sample rows with Hint 1 (`state/template`), Hint 2 (`transition logic`), Hint 3 (`edge/failure correction`).
+- **18–26 min Explanation:** best-window timing, proof of correctness, and common fixed-window mistakes.
+
+## 26–48 Minutes: Problem 2 Block (22 min)
+
+- **26–30 min Precontext:** classify variable trigger and impossibility checks.
+- **30–40 min Student Work:** right/left transitions with Hint 1 (`state/template`), Hint 2 (`transition logic`), Hint 3 (`edge/failure correction`).
+- **40–48 min Explanation:** while-loop shrink logic, multi-shrink ordering, and common student failure correction.
+
+## 48–70 Minutes: Problem 3 Block (22 min)
+
+- **48–52 min Precontext:** map template and duplicate-heavy sanity checks.
+- **52–62 min Student Work:** trace map transitions with Hint 1 (`state/template`), Hint 2 (`transition logic`), Hint 3 (`edge/failure correction`).
+- **62–70 min Explanation:** counts vs set language, duplicate rescue, and off-by-one checks.
+
+## 70–92 Minutes: Problem 4 Block (22 min)
+
+- **70–74 min Precontext:** classify minimum-window structure and missing-required checks.
+- **74–84 min Student Work:** best-window timing trace with Hint 1 (`state/template`), Hint 2 (`transition logic`), Hint 3 (`edge/failure correction`).
+- **84–92 min Explanation:** answer-timing proof, required-character guardrails, and correction language.
+
+## 92–120 Minutes: Transitions, Recap, Closure
+
+- 20–24 minutes (plus flexible buffer) are used only for edge-case quiz, recap, and transfer checks.
+- Instructor-only explanation follows the pre-specified cadence and avoids extending work windows.
+
+## 4) 2-HOUR LESSON PLAN (Legacy Reference)
+
+The active deck order now uses this sequence:
+- 0-4 minute opener.
+- Problem 1 precontext/work/explanation.
+- Problem 2 precontext/work/explanation.
+- Problem 3 precontext/work/explanation.
+- Problem 4 precontext/work/explanation.
+- Transition, recap, and edge-case quiz.
+
 ## 0–10 Minutes: Warm-Up / Hook
 
 ### Teacher Activity

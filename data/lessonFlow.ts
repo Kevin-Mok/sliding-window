@@ -24,6 +24,14 @@ export interface ProblemWorkshop {
   coachScript: string;
   presenterTalkingPointGroups?: PresenterTalkingPointGroup[];
   studentGoal: string;
+  precontextPrompts?: string[];
+  studentWorkPrompts?: string[];
+  explanationPrompts?: string[];
+  workPhaseTimings?: {
+    precontextMinutes?: number;
+    workMinutes?: number;
+    explanationMinutes?: number;
+  };
   prompts: string[];
   checkpoints: string[];
   commonBugs: string[];
@@ -71,8 +79,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "recognize-constraint",
       title: "Pick window type first",
-      titleTag: "0-10 min",
-      durationMinutes: 10,
+      titleTag: "0-4 min",
+      durationMinutes: 4,
       objective:
         "Choose fixed-size or variable-size before any code, using wording only.",
       studentContext: [
@@ -764,6 +772,27 @@ export const lessonFlow: LessonFlowSummary = {
         "Start with fixed template and a 20-second dry run: [4,2,7,1,8,3], k=3.",
       studentGoal:
         "Write a function that returns the max sum of exactly `k` consecutive days.",
+      workPhaseTimings: {
+        precontextMinutes: 4,
+        workMinutes: 10,
+        explanationMinutes: 8,
+      },
+      precontextPrompts: [
+        "Classify this as fixed-size in one sentence.",
+        "Run required edge pre-checks: what should we return when k <= 0 or k > n?",
+        "State the minimum state for one slide: `left`, `right`, and `window_sum`.",
+      ],
+      studentWorkPrompts: [
+        "Hint 1 (~3 min, ~state/template): Trace `[4,2,7,1,8,3]` with `k=3` and write each `left, right, window_sum` row.",
+        "Hint 2 (~6 min, ~transition logic): At first full window (`right=2`), what subtraction happens before next slide and what should `window_sum` become?",
+        "Hint 3 (~9 min, ~edge/failure correction): If k is invalid, where should the function return and what state variables are skipped?",
+        "How do you show that each slide is one add and one remove, never a full rescan?",
+      ],
+      explanationPrompts: [
+        "Explain why this fixed-window template is O(n): one setup plus constant-time updates per slide.",
+        "Walk one wrong student trace and point to the first row where tuple or best-update timing breaks.",
+        "Show the exact best-update order for each full window and why it prevents off-by-one bugs.",
+      ],
       prompts: [
         "Classify this as fixed-size in one line.",
         "Run quick pre-checks: if k<=0 or k>n, what should the function return first?",
@@ -889,6 +918,27 @@ export const lessonFlow: LessonFlowSummary = {
         "Use this sample first: blocks=[2,1,5,2,3,2], target=7, and trace two shrinks at right=3.",
       studentGoal:
         "Find shortest consecutive total with sum >= target, return 0 if impossible.",
+      workPhaseTimings: {
+        precontextMinutes: 3,
+        workMinutes: 10,
+        explanationMinutes: 9,
+      },
+      precontextPrompts: [
+        "Classify this as variable-size and label the trigger in words.",
+        "State required edge pre-checks before tracing: target <= 0 and impossible target behavior.",
+        "What is the one-sentence template for this window loop (`expand`, optional repeated `shrink`, then best update)?",
+      ],
+      studentWorkPrompts: [
+        "Hint 1 (~3 min, ~state/template): Trace sample rows for right=0..2 and write `current_sum` after each expansion.",
+        "Hint 2 (~6 min, ~transition logic): At right=2, where should `left` move and what are the tuple values after the first legal shrink?",
+        "Hint 3 (~9 min, ~edge/failure correction): Why is `while` required at right=3, and how many shrink rows happen before right moves again?",
+        "Use the sample to identify one valid `left` move and one invalid early-stop trace.",
+      ],
+      explanationPrompts: [
+        "Explain why while-loop transitions preserve O(n) despite nested-looking control flow.",
+        "Diagnose one common error where students shrink too early/late and show the fix on the same rows.",
+        "Review edge cases: target = 0 returns 0, and impossible target never updates best.",
+      ],
       prompts: [
         "Classify variable-size and write the while trigger in words.",
         "With target=7, right=2 gives sum=8. Where should `left` end after legal shrinks?",
@@ -1020,6 +1070,27 @@ export const lessonFlow: LessonFlowSummary = {
         "Trace problem with duplicates: code='AAHBBCCB', k=2. Show why set-only fails.",
       studentGoal:
         "Find longest substring containing at most `k` distinct characters.",
+      workPhaseTimings: {
+        precontextMinutes: 3,
+        workMinutes: 10,
+        explanationMinutes: 9,
+      },
+      precontextPrompts: [
+        "Classify this as variable-size with distinct-count constraint.",
+        "State required edge checks to ask now: k=1, empty input, duplicate-heavy windows.",
+        "Define the minimum state needed: `freq`, `left`, `right`, and `distinct_count`.",
+      ],
+      studentWorkPrompts: [
+        "Hint 1 (~3 min, ~state/template): Expand this sample twice and show map updates (`AA`, `AAH`) for one `left/right` move.",
+        "Hint 2 (~6 min, ~transition logic): At the step that becomes invalid, list each duplicate-aware `left` move and count update.",
+        "Hint 3 (~9 min, ~edge/failure correction): In one row, where does `counts` hit zero and why is deleting the key required?",
+        "Find one row where duplicate-heavy data proves set-only logic would fail.",
+      ],
+      explanationPrompts: [
+        "Explain why counts are required even though distinct values are known.",
+        "Show exactly how multi-shrink is handled when many duplicates leave the window.",
+        "Tie this back to the fixed/variable decision and complexity, using the sample invalid/restore rows.",
+      ],
       prompts: [
         "State fixed/variable: this is variable-size with a distinct-count limit.",
         "Trace first four slides in sample: A, AA, AAH, AAHB and show when it becomes invalid.",
@@ -1142,6 +1213,27 @@ export const lessonFlow: LessonFlowSummary = {
         "Use sample 'xbacbabca' + required [a,b,c] and highlight when `have` changes 0/1.",
       studentGoal:
         "Find shortest substring containing all required characters at least once.",
+      workPhaseTimings: {
+        precontextMinutes: 2,
+        workMinutes: 10,
+        explanationMinutes: 10,
+      },
+      precontextPrompts: [
+        "Classify as minimum-window variable-size and identify `have`/`needed` roles.",
+        "Run edge pre-checks: missing required char and required duplicates/multi-shrink stress case.",
+        "State state update order: increment counts, validity check, snapshot best, then shrink.",
+      ],
+      studentWorkPrompts: [
+        "Hint 1 (~3 min, ~state/template): Trace right to index 3 (`bac`) and mark `(left,right,current_sum?)`/counts for required chars.",
+        "Hint 2 (~6 min, ~transition logic): At each valid row, show when best snapshot should be recorded and what happens to `have` after one shrink.",
+        "Hint 3 (~9 min, ~edge/failure correction): What failure occurs if left moves one extra before best update, and which sample row proves it?",
+        "Use the sample to trace one row where required char count drops from 2 to 1.",
+      ],
+      explanationPrompts: [
+        "Explain best-window timing in one cycle: record valid candidate first, then shrink.",
+        "Explain `have`/`needed` transitions when the required set changes or has duplicates.",
+        "Review impossible-case and duplicate-heavy inputs and where to return empty string or preserve best.",
+      ],
       prompts: [
         "Classify template and note when the window becomes valid for this sample.",
         "At right=3 we first hit `b,a,c`. What candidate window is valid now?",
