@@ -21,6 +21,7 @@ export interface LessonStep {
 
 export interface ProblemWorkshop {
   problemSlug: string;
+  deliveryScope?: "class" | "homework";
   coachScript: string;
   presenterTalkingPointGroups?: PresenterTalkingPointGroup[];
   studentGoal: string;
@@ -47,8 +48,15 @@ export interface LessonFlowSummary {
   totalMinutes: number;
   precheck: string[];
   closings: string[];
+  classAgenda: LessonDeckAgendaItem[];
   lessonSteps: LessonStep[];
   problemWorkshops: ProblemWorkshop[];
+}
+
+export interface LessonDeckAgendaItem {
+  kind: "lesson" | "problem";
+  lessonStepId?: string;
+  problemSlug?: string;
 }
 
 type PresenterExpansion = {
@@ -74,6 +82,17 @@ export const lessonFlow: LessonFlowSummary = {
     "Students can name what left and right point to at each step.",
     "Students can keep only required state and update it in O(1).",
     "Students can explain why this pattern is linear using pointer movement.",
+  ],
+  classAgenda: [
+    { kind: "lesson", lessonStepId: "recognize-constraint" },
+    { kind: "lesson", lessonStepId: "derive-state" },
+    { kind: "problem", problemSlug: "best-k-day-step-streak" },
+    { kind: "lesson", lessonStepId: "fixed-proof" },
+    { kind: "lesson", lessonStepId: "pattern-decision" },
+    { kind: "problem", problemSlug: "shortest-study-sprint" },
+    { kind: "lesson", lessonStepId: "variable-demo" },
+    { kind: "lesson", lessonStepId: "invariant" },
+    { kind: "problem", problemSlug: "longest-club-code-with-limited-symbols" },
   ],
   lessonSteps: [
     {
@@ -186,8 +205,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "derive-state",
       title: "Track minimum state only",
-      titleTag: "10-25 min",
-      durationMinutes: 15,
+      titleTag: "10 min",
+      durationMinutes: 10,
       objective:
         "Keep only the state fields that are updated in O(1) each pointer move.",
       studentContext: [
@@ -296,8 +315,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "invariant",
       title: "Add one sentence invariant",
-      titleTag: "25-40 min",
-      durationMinutes: 15,
+      titleTag: "10 min",
+      durationMinutes: 10,
       objective:
         "Use one short invariant sentence to prevent silent pointer mistakes.",
       studentContext: [
@@ -381,8 +400,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "fixed-proof",
       title: "Simple linear-time proof",
-      titleTag: "40-55 min",
-      durationMinutes: 15,
+      titleTag: "10 min",
+      durationMinutes: 10,
       objective:
         "Explain runtime with index entry/exit count for fixed-size only.",
       studentContext: [
@@ -461,7 +480,7 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "pattern-decision",
       title: "If vs while and trigger rule",
-      titleTag: "55-65 min",
+      titleTag: "10 min",
       durationMinutes: 10,
       objective: "Choose if/while from whether shrink can happen many times at once.",
       studentContext: [
@@ -540,8 +559,8 @@ export const lessonFlow: LessonFlowSummary = {
     {
       id: "variable-demo",
       title: "Multi-shrink demo",
-      titleTag: "65-80 min",
-      durationMinutes: 15,
+      titleTag: "10 min",
+      durationMinutes: 10,
       objective: "Walk one concrete multi-shrink trace and keep updates visible.",
       studentContext: [
         'Trace Problem 2 sample: blocks=[2,1,5,2,3,2], target=7.',
@@ -768,6 +787,7 @@ export const lessonFlow: LessonFlowSummary = {
   problemWorkshops: [
     {
       problemSlug: "best-k-day-step-streak",
+      deliveryScope: "class",
       coachScript:
         "Start with fixed template and a 20-second dry run: [4,2,7,1,8,3], k=3.",
       studentGoal:
@@ -914,6 +934,7 @@ export const lessonFlow: LessonFlowSummary = {
     },
     {
       problemSlug: "shortest-study-sprint",
+      deliveryScope: "class",
       coachScript:
         "Use this sample first: blocks=[2,1,5,2,3,2], target=7, and trace two shrinks at right=3.",
       studentGoal:
@@ -1066,6 +1087,7 @@ export const lessonFlow: LessonFlowSummary = {
     },
     {
       problemSlug: "longest-club-code-with-limited-symbols",
+      deliveryScope: "class",
       coachScript:
         "Trace problem with duplicates: code='AAHBBCCB', k=2. Show why set-only fails.",
       studentGoal:
@@ -1209,6 +1231,7 @@ export const lessonFlow: LessonFlowSummary = {
     },
     {
       problemSlug: "smallest-announcement-clip",
+      deliveryScope: "homework",
       coachScript:
         "Use sample 'xbacbabca' + required [a,b,c] and highlight when `have` changes 0/1.",
       studentGoal:

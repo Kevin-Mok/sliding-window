@@ -5,8 +5,18 @@
 - **Expected**: each slide loads, lesson progress updates, and slide index in URL stays in sync.
 
 ### Problem sequencing in deck order
-- **Action**: open the deck from slide 1 and move forward through the first 4 problem-related slides.
-- **Expected**: Problem 1 appears immediately after opener/primer content and before Problem 2/3/4, with the sequence repeating precontext → student-work → explanation each time.
+- **Action**: open the deck from slide 1 and move forward through the deck timeline.
+- **Expected**: slides are ordered as:
+  - Teaching: `recognize-constraint`
+  - Teaching: `derive-state`
+  - Problem 1 (`best-k-day-step-streak`) precontext → student-work → explanation
+  - Teaching: `fixed-proof`
+  - Teaching: `pattern-decision`
+  - Problem 2 (`shortest-study-sprint`) precontext → student-work → explanation
+  - Teaching: `variable-demo`
+  - Teaching: `invariant`
+  - Problem 3 (`longest-club-code-with-limited-symbols`) precontext → student-work → explanation
+- **Expected**: no in-class Problem 4 slide appears in the main deck.
 
 ### Presenter vs student parity
 - **Action**: on a lesson slide and a problem section, switch Presenter view and Student view.
@@ -40,9 +50,9 @@
 ### Deck metadata and docs alignment
 - **Action**: review `data/lessonFlow.ts` and `docs/lesson-plan-gpt.md` after implementation.
 - **Expected**:
-  - Each problem has precontext/work/explanation prompt fields.
-  - Work durations remain fixed at 10 minutes.
-  - The plan doc lists 4/3/3/2 precontext minutes, 10m fixed work windows, and 8/9/9/10 explanation slots.
+  - A class agenda is defined with an explicit interleaved order.
+  - In-class lesson step durations and problem phase durations match a 120-minute total.
+  - Problem 4 (`smallest-announcement-clip`) is marked as homework-only for class.
 
 ### Direct slide sharing
 - **Action**: click `Copy slide link` on a lesson and problem slide, then open the copied URL in a new tab.

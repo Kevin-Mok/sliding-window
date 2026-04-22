@@ -5,9 +5,9 @@ import { CodeBlock } from "./CodeBlock";
 import {
   getProblemBySlug,
   lessonFlow,
+  type LessonDeckAgendaItem,
   type LessonStep,
   type ProblemWorkshop,
-  workshopOrder,
 } from "../data/lessonFlow";
 
 type AudienceMode = "presenter" | "student";
@@ -22,6 +22,8 @@ type LessonSlide =
       problem?: never;
       tag: string;
       timing?: string;
+      timelineStartMinute: number;
+      timelineMinutes: number;
     }
   | {
       kind: "problem";
@@ -32,6 +34,8 @@ type LessonSlide =
       tag: string;
       phase: ProblemPhase;
       timing?: string;
+      timelineStartMinute: number;
+      timelineMinutes: number;
     };
 
 const problemPhaseMeta: Record<
@@ -60,8 +64,6 @@ const problemPhaseMeta: Record<
 
 const problemPhaseOrder: ProblemPhase[] = ["precontext", "student-work", "explanation"];
 
-const openingLessonCount = 1;
-
 type PresenterPoint = {
   bullet: string;
   expansion?: string[];
@@ -84,48 +86,98 @@ export function LessonFlowDeck() {
   >({});
 
   const slides = useMemo<LessonSlide[]>(() => {
-    const workshopSlides: LessonSlide[] = lessonFlow.problemWorkshops.flatMap(
-      (workshop, index) => {
-        const precontextMinutes = workshop.workPhaseTimings?.precontextMinutes ?? 4;
-        const workMinutes = workshop.workPhaseTimings?.workMinutes ?? 10;
-        const explanationMinutes = workshop.workPhaseTimings?.explanationMinutes ?? 8;
-
-        return problemPhaseOrder.map(
-          (phase): LessonSlide => {
-            const timing =
-              phase === "precontext"
-                ? `${precontextMinutes} min`
-                : phase === "student-work"
-                  ? `${workMinutes} min`
-                  : `${explanationMinutes} min`;
-            const phaseMeta = problemPhaseMeta[phase];
-
-            return {
-              kind: "problem",
-              id: `problem-${workshop.problemSlug}-${phase}`,
-              title: `Problem ${index + 1}: ${phaseMeta.titleSummary}`,
-              tag: `Problem ${index + 1} • ${phaseMeta.navLabel} (${timing})`,
-              problem: workshop,
-              phase,
-              timing,
-            };
-          },
-        );
-      },
+    const lessonSlides = new Map<string, LessonStep>(
+      lessonFlow.lessonSteps.map((step) => [step.id, step]),
     );
-    const lessonSlides: LessonSlide[] = lessonFlow.lessonSteps.map((step, index) => ({
-      kind: "lesson",
-      id: `lesson-${step.id}`,
-      title: step.title,
-      tag: step.titleTag ?? `Section ${index + 1}`,
-      step,
-      timing: step.durationMinutes ? `${step.durationMinutes} min` : undefined,
-    }));
-    const openingLessonSlides = lessonSlides.slice(0, openingLessonCount);
-    const closingLessonSlides = lessonSlides.slice(openingLessonCount);
+    const problemWorkshops = new Map<string, ProblemWorkshop>(
+      lessonFlow.problemWorkshops.map((workshop) => [workshop.problemSlug, workshop]),
+    );
+    const problemOrder = new Map<string, number>(
+      lessonFlow.problemWorkshops.map((workshop, index) => [
+        workshop.problemSlug,
+        index + 1,
+      ]),
+    );
+    const agenda = lessonFlow.classAgenda.length
+      ? lessonFlow.classAgenda
+      : lessonFlow.lessonSteps.map<LessonDeckAgendaItem>((step) => ({
+          kind: "lesson",
+          lessonStepId: step.id,
+        }));
+    let runningMinute = 0;
+    const agendaSlides: LessonSlide[] = [];
 
-    return [...openingLessonSlides, ...workshopSlides, ...closingLessonSlides];
+    const addLessonSlide = (step: LessonStep) => {
+      const timelineStartMinute = runningMinute;
+      const timelineMinutes = step.durationMinutes ?? 0;
+      const endMinute = timelineStartMinute + timelineMinutes;
+      runningMinute = endMinute;
+      agendaSlides.push({
+        kind: "lesson",
+        id: `lesson-${step.id}`,
+        title: step.title,
+        tag: `Teaching step • ${timelineStartMinute}-${endMinute} min`,
+        step,
+        timing: timelineMinutes ? `${timelineMinutes} min` : undefined,
+        timelineStartMinute,
+        timelineMinutes,
+      });
+    };
+
+    agenda.forEach((item: LessonDeckAgendaItem) => {
+      if (item.kind === "lesson" && item.lessonStepId) {
+        const step = lessonSlides.get(item.lessonStepId);
+        if (!step) return;
+        addLessonSlide(step);
+        return;
+      }
+
+      if (item.kind !== "problem" || !item.problemSlug) return;
+      const workshop = problemWorkshops.get(item.problemSlug);
+      if (!workshop) return;
+      const problemIndex = problemOrder.get(item.problemSlug) ?? 0;
+      const precontextMinutes =
+        workshop.workPhaseTimings?.precontextMinutes ??
+        4;
+      const workMinutes = workshop.workPhaseTimings?.workMinutes ?? 10;
+      const explanationMinutes = workshop.workPhaseTimings?.explanationMinutes ?? 8;
+
+      problemPhaseOrder.forEach((phase) => {
+        const timelineMinutes =
+          phase === "precontext"
+            ? precontextMinutes
+            : phase === "student-work"
+              ? workMinutes
+              : explanationMinutes;
+        const phaseMeta = problemPhaseMeta[phase];
+        const timelineStartMinute = runningMinute;
+        const endMinute = timelineStartMinute + timelineMinutes;
+        runningMinute = endMinute;
+        agendaSlides.push({
+          kind: "problem",
+          id: `problem-${workshop.problemSlug}-${phase}`,
+          title: `Problem ${problemIndex}: ${phaseMeta.titleSummary}`,
+          tag: `Problem ${problemIndex} • ${phaseMeta.navLabel} (${timelineStartMinute}-${endMinute} min)`,
+          problem: workshop,
+          phase,
+          timing: `${timelineMinutes} min`,
+          timelineStartMinute,
+          timelineMinutes,
+        });
+      });
+    });
+
+    return agendaSlides.sort((a, b) => a.timelineStartMinute - b.timelineStartMinute);
   }, []);
+
+  const problemSlideIndexByPhase = useMemo(() => {
+    const map = new Map<string, number>();
+    slides.forEach((slide, index) => {
+      if (slide.kind !== "problem") return;
+      map.set(`${slide.problem.problemSlug}-${slide.phase}`, index);
+    });
+    return map;
+  }, [slides]);
 
   useEffect(() => {
     const rawSlide = new URL(window.location.href).searchParams.get("slide");
@@ -185,7 +237,11 @@ export function LessonFlowDeck() {
     : undefined;
   const activeWorkshop = activeSlide.kind === "problem" ? activeSlide.problem : undefined;
   const activeProblemIndex = activeProblemSlug
-    ? workshopOrder.indexOf(activeProblemSlug)
+    ? slides.findIndex(
+        (slide) =>
+          slide.kind === "problem" &&
+          slide.problem.problemSlug === activeProblemSlug,
+      )
     : -1;
   const activeProblemPhaseIndex =
     activeSlide.kind === "problem"
@@ -204,8 +260,11 @@ export function LessonFlowDeck() {
 
   const goToProblemPhase = (phaseIndex: number) => {
     if (activeProblemIndex < 0) return;
-    const target = openingLessonCount + activeProblemIndex * problemPhaseOrder.length + phaseIndex;
-    if (target < openingLessonCount || target >= slides.length) return;
+    if (!activeProblem) return;
+    const target = problemSlideIndexByPhase.get(
+      `${activeProblem.problemSlug}-${problemPhaseOrder[phaseIndex]}`,
+    );
+    if (target === undefined) return;
     setActiveIndex(target);
     setTraceLineIndex(0);
     setRevealIndex(-1);
