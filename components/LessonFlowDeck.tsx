@@ -260,9 +260,9 @@ export function LessonFlowDeck() {
 
   const goToProblemPhase = (phaseIndex: number) => {
     if (activeProblemIndex < 0) return;
-    if (!activeProblem) return;
+    if (!activeWorkshop) return;
     const target = problemSlideIndexByPhase.get(
-      `${activeProblem.problemSlug}-${problemPhaseOrder[phaseIndex]}`,
+      `${activeWorkshop.problemSlug}-${problemPhaseOrder[phaseIndex]}`,
     );
     if (target === undefined) return;
     setActiveIndex(target);
