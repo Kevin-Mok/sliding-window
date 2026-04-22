@@ -7,7 +7,7 @@ For each problem, submit:
 - Problem slug and chosen window type (`fixed-size` or `variable-size`).
 - A one-sentence invariant for your chosen window.
 - A one-line complexity statement in plain English (`O(n)` and why).
-- A minimum state list (fixed-size: `window_sum`, `best`, `left`, `k`; variable-size: `left`, `right`, `current_sum`, answer state).
+- A minimum state list (fixed-size: `left`, `right`, `cur_total_steps`, `best_total_steps`; variable-size: `left`, `right`, `current_sum`, answer state).
 - 3 edge checks you would run first (including at least one impossible/empty case when relevant).
 - A short explanation of your approach.
 - Your Python solution.

@@ -37,47 +37,63 @@ export const problems: SlidingWindowProblem[] = [
     sampleInput: `steps = [4, 2, 7, 1, 8, 3]
 k = 3`,
     sampleOutput: "16",
-    pythonSolution: `def best_k_day_steps(steps, k):
-    if k <= 0 or len(steps) < k:
+    pythonSolution: `def best_k_day_steps(steps: list[int], k: int) -> int | None:
+    # Fixed-size window: it must have at least 1 day
+    # and cannot be longer than the list.
+    if k <= 0 or k > len(steps):
         return None
 
-    window_sum = sum(steps[:k])
-    best = window_sum
+    left = 0
+    # \`right\` is inclusive, so the first k-day window
+    # spans indices 0 through k - 1.
+    right = k - 1
+    # Slices stop before the end index, so \`right + 1\`
+    # includes the full first window.
+    cur_total_steps = sum(steps[left:right + 1])
+    # Start with the first full fixed-size window,
+    # then compare later windows against it.
+    best_total_steps = cur_total_steps
+    # Stop once \`right\` is at the last index;
+    # sliding again would step past the array.
+    while right < len(steps) - 1:
+        # Slide order: remove old left, move both ends,
+        # then add the new right value.
+        # That order keeps the window size at k
+        # and avoids off-by-one mistakes.
+        cur_total_steps -= steps[left]
+        left += 1
+        right += 1
+        cur_total_steps += steps[right]
+        best_total_steps = max(best_total_steps, cur_total_steps)
 
-    for right in range(k, len(steps)):
-        left = right - k
-        window_sum += steps[right]
-        window_sum -= steps[left]
-        best = max(best, window_sum)
-
-    return best`,
+    return best_total_steps`,
     explanation: [
       "Read the prompt and confirm this is a fixed-size window.",
-      "Build the first `k` value by summing `steps[:k]`.",
-      "For each next day, add the new right day and remove the leaving left day.",
-      "Update `best` after each slide.",
+      "Set `left = 0` and `right = k - 1` so the first full `k`-day window is indices `0` through `k - 1`.",
+      "Use `sum(steps[left:right + 1])` because `right` is inclusive and Python slices stop before the end index.",
+      "For each slide, remove the old left value, increment `left`, increment `right`, add the new right value, then update `best_total_steps`.",
       "Return `None` when a full fixed-size window is impossible.",
     ],
     traceAscii: [
       "$ steps = [4, 2, 7, 1, 8, 3], k = 3",
-      "> Initial window sum=13, best=13",
-      "> Slide right=3: remove steps[0]=4, add steps[3]=1",
-      "  window_sum = 13 - 4 + 1 = 10",
-      "  best stays 13",
-      "> Slide right=4: remove steps[1]=2, add steps[4]=8",
-      "  window_sum = 10 - 2 + 8 = 16",
-      "  best updated to 16",
-      "> Slide right=5: remove steps[2]=7, add steps[5]=3",
-      "  window_sum = 16 - 7 + 3 = 12",
-      "  best stays 16",
+      "> Setup: left=0, right=2, cur_total_steps=13, best_total_steps=13",
+      "> Slide to right=3: remove steps[0]=4, left=1, right=3, add steps[3]=1",
+      "  cur_total_steps = 13 - 4 + 1 = 10",
+      "  best_total_steps stays 13",
+      "> Slide to right=4: remove steps[1]=2, left=2, right=4, add steps[4]=8",
+      "  cur_total_steps = 10 - 2 + 8 = 16",
+      "  best_total_steps updates to 16",
+      "> Slide to right=5: remove steps[2]=7, left=3, right=5, add steps[5]=3",
+      "  cur_total_steps = 16 - 7 + 3 = 12",
+      "  best_total_steps stays 16",
       ">= Answer: 16",
     ],
     timeComplexity: "O(n)",
     spaceComplexity: "O(1)",
     commonMistakes: [
-      "Starting the main loop at index 0 instead of k.",
-      "Removing the wrong element on each slide.",
-      "Forgetting to return `None` when `k <= 0` or `len(steps) < k`.",
+      "Treating `right` as exclusive instead of inclusive when building the first full window.",
+      "Changing the slide order instead of removing old left, then moving both pointers, then adding the new right value.",
+      "Forgetting to return `None` when `k <= 0` or `k > len(steps)`.",
       "Recomputing each window from scratch in O(n).",
     ],
   },

@@ -212,10 +212,10 @@ export const lessonFlow: LessonFlowSummary = {
         "Keep only the state fields that are updated in O(1) each pointer move.",
       studentContext: [
         "Problem 1 example state: steps=[4,2,7,1,8,3], k=3. What fields must exist to process one slide?",
-        "After first slide (`right=3`), what are the new `left`, `right`, and `window_sum` values?",
+        "At the first full window (`right=2`), what are `left`, `right`, `cur_total_steps`, and `best_total_steps`?",
         "Keep the state list short so each pointer move is O(1).",
         "How many states do we keep for each window type so we can update in O(1)?",
-        "What does `left`, `right`, and `window_sum` represent conceptually before and after each transition?",
+        "What do `left`, `right`, and `cur_total_steps` represent conceptually before and after each transition?",
       ],
       presenterTalkingPointGroups: [
         {
@@ -233,7 +233,7 @@ export const lessonFlow: LessonFlowSummary = {
             {
               bullet: "Use the minimum list as a contract before coding.",
               expansion: [
-                "Fixed-size: `window_sum`, `best`, `left`, `k`.",
+                "Fixed-size: `left`, `right`, `cur_total_steps`, `best_total_steps`.",
                 "Variable-size: `left`, `right`, `current_sum`, plus `best_length`/`best_state`.",
                 "If a field is not needed to update state in O(1), remove it from the board.",
                 "If a field is needed to answer final question, keep it separate from pointer transition state.",
@@ -242,7 +242,7 @@ export const lessonFlow: LessonFlowSummary = {
             {
               bullet: "Force students to map each field to a single transition line.",
               expansion: [
-                "Right move updates window sum (+incoming, -outgoing when sliding).",
+                "For Problem 1, the slide order is remove old left, increment `left`, increment `right`, add new right, then update `best_total_steps`.",
                 "Left move updates window sum (when shrinking).",
                 "Answer state updates after validation step.",
                 "If the line does not move a pointer, ask which checkpoint it belongs to instead.",
@@ -256,20 +256,20 @@ export const lessonFlow: LessonFlowSummary = {
             {
               bullet: "Walk right and left updates as a repeatable 3-line cycle.",
               expansion: [
-                "Right moves first: include new number.",
-                "If fixed-size, drop one leftmost number only when `right` has covered `k` elements.",
+                "For Problem 1, start with the first full window already built at `left=0,right=k-1`.",
+                "Then repeat the same fixed-size slide: remove old left, move `left`, move `right`, add the new right value.",
                 "If variable-size, keep shrinking left until trigger condition is no longer true.",
-                "Only after transition ends can we compare and store best.",
+                "Only after the full slide ends can we compare and store `best_total_steps`.",
               ],
             },
             {
               bullet: "Use the Problem 1 sample to force concrete numbers.",
               expansion: [
-                "Start with `left=0,right=0,window_sum=0`.",
-                "At first full window (`right=3`), students should get `left=1,right=3,window_sum=13`.",
-                "Using 1-based window labels for this example, next rows are `left=2,right=4,window_sum=10`, then `left=3,right=5,window_sum=16`, then `left=4,right=6,window_sum=12`.",
+                "Start with `left=0,right=2,cur_total_steps=13,best_total_steps=13`.",
+                "After one slide, students should get `left=1,right=3,cur_total_steps=10,best_total_steps=13`.",
+                "Then the next rows are `left=2,right=4,cur_total_steps=16,best_total_steps=16`, then `left=3,right=5,cur_total_steps=12,best_total_steps=16`.",
                 "Ask students to say the exact pointer and state action in each of those three rows.",
-                "If indexing confuses them, switch to 1-based naming for explanation and switch back.",
+                "Keep `right` inclusive so students see why `right + 1` is needed in the first setup slice.",
               ],
             },
             {
@@ -277,7 +277,7 @@ export const lessonFlow: LessonFlowSummary = {
               expansion: [
                 "Window starts only once; it does not rebuild itself from scratch each row.",
                 "If a student cannot state one line transition, pause before moving right again.",
-                "If they update best too early, ask them to check the trigger condition once more.",
+                "If they update `best_total_steps` too early, ask them to check the trigger condition once more.",
                 "This is where most silent off-by-one and stale-window bugs happen.",
               ],
             },
@@ -301,7 +301,7 @@ export const lessonFlow: LessonFlowSummary = {
         "Students can write transition rules from words before opening solution code.",
       failurePatterns: [
         "Keeping extra fields that never change in constant time.",
-        "Dropping `best` or equivalent answer state too early.",
+        "Dropping `best_total_steps` in fixed-size or equivalent answer state too early.",
       ],
       commonFailurePatterns: [
         "Using a set where counts are required.",
@@ -321,7 +321,7 @@ export const lessonFlow: LessonFlowSummary = {
       objective:
         "Use one short invariant sentence to prevent silent pointer mistakes.",
       studentContext: [
-        "Fixed example: after each slide, window_sum equals sum of current 3 days.",
+        "Fixed example: after each slide, `cur_total_steps` equals the sum of the current 3-day window.",
         "Variable example: with [2,1,5,2,3], target=7 at right=3, what does `left`/`right` cover before shrinking?",
         "After each left move, re-check whether that window is still valid before moving on.",
       ],
@@ -332,9 +332,9 @@ export const lessonFlow: LessonFlowSummary = {
             {
               bullet: "Set one invariant sentence on board before trace.",
               expansion: [
-                "For fixed-size: window_sum tracks exactly the k elements inside left/right.",
+                "For fixed-size: `cur_total_steps` tracks exactly the k elements inside inclusive `left/right`.",
                 "For variable-size: `counts/current_sum` reflect every element currently inside the window.",
-                "After every move, ask students to read this sentence before best update.",
+                "After every move, ask students to read this sentence before the answer update.",
               ],
             },
             {
@@ -363,7 +363,7 @@ export const lessonFlow: LessonFlowSummary = {
               bullet: "Instructor correction language.",
               expansion: [
                 "Say: `Window says 4 items, but right/left only show 3.`",
-                "Say: `You updated best before fixing state, move that line after validation.`",
+                "Say: `You updated the answer before fixing state, move that line after validation.`",
               ],
             },
           ],
@@ -374,7 +374,7 @@ export const lessonFlow: LessonFlowSummary = {
         "Require students to point to exact invariant line after each move.",
       ],
       studentMoves: [
-        "Check invariants before updating best in each iteration.",
+        "Check invariants before updating the answer in each iteration.",
         "Call out when invariants fail and what line restores them.",
       ],
       checks: [
@@ -385,7 +385,7 @@ export const lessonFlow: LessonFlowSummary = {
       successCriteria:
         "Students can catch one wrong move by reading invariant mismatch.",
       failurePatterns: [
-        "Updating best before validating current state.",
+        "Updating the answer before validating current state.",
         "Shrinking and still reading old answer candidate.",
       ],
       commonFailurePatterns: [
@@ -417,7 +417,7 @@ export const lessonFlow: LessonFlowSummary = {
             {
               bullet: "Run a visible entry/exit count in front of the class.",
               expansion: [
-                "One startup pass builds `window_sum` for the first k items.",
+                "One startup pass builds `cur_total_steps` for indices 0 through `k - 1`.",
                 "Then each index enters once and exits once in fixed-size flow.",
                 "Each enter/exit is O(1), so total is linear.",
               ],
@@ -858,35 +858,35 @@ export const lessonFlow: LessonFlowSummary = {
       precontextPrompts: [
         "Classify this as fixed-size in one sentence.",
         "Run required edge pre-checks: what should we return when k <= 0 or k > n?",
-        "State the minimum state for one slide: `left`, `right`, and `window_sum`.",
+        "State the minimum state for one slide: `left`, `right`, `cur_total_steps`, and `best_total_steps`.",
       ],
       studentWorkPrompts: [
-        "Hint 1 (~3 min, ~state/template): Trace `[4,2,7,1,8,3]` with `k=3` and write each `left, right, window_sum` row.",
-        "Hint 2 (~6 min, ~transition logic): At first full window (`right=2`), what subtraction happens before next slide and what should `window_sum` become?",
+        "Hint 1 (~3 min, ~state/template): Trace `[4,2,7,1,8,3]` with `k=3` and write each `left, right, cur_total_steps, best_total_steps` row.",
+        "Hint 2 (~6 min, ~transition logic): At first full window (`left=0,right=2`), which value leaves first, then what do `left`, `right`, and `cur_total_steps` become after the slide?",
         "Hint 3 (~9 min, ~edge/failure correction): If k is invalid, where should the function return and what state variables are skipped?",
         "How do you show that each slide is one add and one remove, never a full rescan?",
       ],
       explanationPrompts: [
         "Explain why this fixed-window template is O(n): one setup plus constant-time updates per slide.",
-        "Walk one wrong student trace and point to the first row where tuple or best-update timing breaks.",
-        "Show the exact best-update order for each full window and why it prevents off-by-one bugs.",
+        "Walk one wrong student trace and point to the first row where tuple or `best_total_steps` timing breaks.",
+        "Show the exact `best_total_steps` update order for each full window and why it prevents off-by-one bugs.",
       ],
       prompts: [
         "Classify this as fixed-size in one line.",
         "Run quick pre-checks: if k<=0 or k>n, what should the function return first?",
         "Dry-run with sample: what is the current window and sum at each right index?",
-        "At `right=2`, what subtraction happens before the next slide starts?",
-        "At first full window (`right=3`), what are the exact `left`, `right`, and `window_sum` values?",
+        "At `right=2`, which value leaves first before the next slide begins?",
+        "At first full window (`right=2`), what are the exact `left`, `right`, `cur_total_steps`, and `best_total_steps` values?",
         "Write the one transition line students can repeat for every slide.",
-        "What is the final best window on this sample after last slide?",
+        "What is the final `best_total_steps` value on this sample after the last slide?",
       ],
       checkpoints: [
-        "Build first k window once, then start right at index k.",
-        "Each slide does one add and one remove.",
-        "Update best only after each full valid 3-element slide.",
+        "Build the first full window once with `left=0` and `right=k-1`.",
+        "Each slide removes old left, moves both pointers, then adds the new right value.",
+        "Update `best_total_steps` only after each full valid 3-element slide.",
       ],
       commonBugs: [
-        "Loop starts at index 0 instead of k.",
+        "Treating the first full window as if `right` starts at `k` instead of `k - 1`.",
         "Removes wrong leaving element during slide.",
         "Skips `None` return when k>n or k==0.",
       ],
@@ -896,11 +896,11 @@ export const lessonFlow: LessonFlowSummary = {
       ],
       edgeCasePrompts: ["k=0", "k=len(steps)", "k>len(steps)", "empty input"],
       sanityChecks: [
-        "State is `[4,2,7,1,8,3], k=3`: initial 13, then 10, then 16, then 12.",
+        "State is `[4,2,7,1,8,3], k=3`: `cur_total_steps` goes 13, then 10, then 16, then 12.",
         "Every index in this sample enters and leaves once after setup.",
       ],
       stretchQuestion:
-        "Can you return both best sum and start index of the max window?",
+        "Can you return both `best_total_steps` and the start index of the max window?",
       successCriteria:
         "Students can explain fixed-window proof with this sample trace.",
       presenterTalkingPointGroups: [
@@ -910,8 +910,8 @@ export const lessonFlow: LessonFlowSummary = {
             {
               bullet: "Use this exact student flow: classify, state, transition, check.",
               expansion: [
-                "Start with the first k sum once, then slide with add/remove each step.",
-                "First full window appears only when right reaches index k.",
+                "Start with the first full window once at `left=0,right=k-1`.",
+                "First full window appears when `right` reaches index `k - 1`.",
                 "Answer updates happen only when a full `k` window exists.",
                 "If k is invalid, return `None` and stop before any window logic.",
                 "Talk through state after every slide rather than only final numbers.",
@@ -922,15 +922,15 @@ export const lessonFlow: LessonFlowSummary = {
               expansion: [
                 "Students must show setup step for first window.",
                 "Students must remove exactly one leaving item each slide.",
-                "Students must update best after building or after subtracting leaving item.",
+                "Students must update `best_total_steps` only after the new right value has been added.",
               ],
             },
             {
               bullet: "How to run the 30-second in-class trace.",
               expansion: [
-                "Say out loud: `right enters`, `if full then left exits`, `best updates`.",
+                "Say out loud: `remove old left`, `left moves`, `right moves`, `new right enters`, `best_total_steps updates`.",
                 "Have one student call out numeric tuple each step.",
-                "Pause after every best update and ask why that step is a candidate.",
+                "Pause after every `best_total_steps` update and ask why that step is a candidate.",
                 "Then continue with the same phrase for each line.",
               ],
             },
@@ -950,7 +950,7 @@ export const lessonFlow: LessonFlowSummary = {
             {
               bullet: "Instructor check list before class closes.",
               expansion: [
-                "Have one student verbalize when best changes.",
+                "Have one student verbalize when `best_total_steps` changes.",
                 "Have another student verbalize pointer motion only.",
                 "Then compare to expected sample sequence together.",
               ],
@@ -958,9 +958,9 @@ export const lessonFlow: LessonFlowSummary = {
             {
               bullet: "Quick check language for difficult students.",
               expansion: [
-                "If team is stuck, ask: `What is window_sum before we remove anything?`",
+                "If team is stuck, ask: `What is cur_total_steps before we remove anything?`",
                 "Then ask: `What is removed value when we slide right by one?`",
-                "Then ask: `Did we update best before or after the full window existed?`",
+                "Then ask: `Did we update best_total_steps before or after the full window existed?`",
                 "Close loop by restating the full-slide formula in one sentence.",
               ],
             },
@@ -973,8 +973,8 @@ export const lessonFlow: LessonFlowSummary = {
               bullet: "If a team says answer is wrong, use these checkpoints.",
               expansion: [
                 "Did they initialize first window before slide loop?",
-                "Did they remove the right leaving element before adding right+1?",
-                "Did they allow best update before full k window exists?",
+                "Did they remove the old left value before moving both pointers?",
+                "Did they allow `best_total_steps` to update before a full k window exists?",
               ],
             },
             {
