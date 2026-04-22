@@ -423,6 +423,56 @@ pre {
   margin-right: 0.45rem;
 }
 
+.reference-table-card {
+  gap: 0.85rem;
+}
+
+.reference-table-card__header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.reference-table-card__scroll {
+  overflow-x: auto;
+}
+
+.reference-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  border: 1px solid #4d4d4d;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #050505;
+}
+
+.reference-table th,
+.reference-table td {
+  padding: 0.7rem 0.8rem;
+  border-bottom: 1px solid #2d2d2d;
+  border-right: 1px solid #2d2d2d;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.9rem;
+}
+
+.reference-table th:last-child,
+.reference-table td:last-child {
+  border-right: 0;
+}
+
+.reference-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.reference-table th {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  background: #101010;
+}
+
 .muted {
   color: var(--muted);
 }

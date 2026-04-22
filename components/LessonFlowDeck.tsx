@@ -6,6 +6,7 @@ import {
   getProblemBySlug,
   lessonFlow,
   type LessonDeckAgendaItem,
+  type LessonReferenceTable,
   type LessonStep,
   type ProblemWorkshop,
 } from "../data/lessonFlow";
@@ -73,6 +74,45 @@ type PresenterPointGroup = {
   heading: string;
   points: PresenterPoint[];
 };
+
+function LessonReferenceTableCard({
+  table,
+}: {
+  table: LessonReferenceTable;
+}) {
+  return (
+    <section className="content-section reference-table-card">
+      <div className="reference-table-card__header">
+        <h4>{table.title}</h4>
+        {table.caption ? <p className="muted">{table.caption}</p> : null}
+      </div>
+      <div className="reference-table-card__scroll">
+        <table className="reference-table">
+          <thead>
+            <tr>
+              {table.columns.map((column) => (
+                <th key={`${table.title}-${column}`} scope="col">
+                  {column}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {table.rows.map((row, rowIndex) => (
+              <tr key={`${table.title}-row-${rowIndex}`}>
+                {row.map((cell, cellIndex) => (
+                  <td key={`${table.title}-row-${rowIndex}-cell-${cellIndex}`}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
 
 export function LessonFlowDeck() {
   const [audience, setAudience] = useState<AudienceMode>("presenter");
@@ -553,6 +593,9 @@ export function LessonFlowDeck() {
                     ))}
                   </div>
                 </section>
+                {activeSlide.step.referenceTable ? (
+                  <LessonReferenceTableCard table={activeSlide.step.referenceTable} />
+                ) : null}
               </>
             ) : null}
 

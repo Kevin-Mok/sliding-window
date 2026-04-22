@@ -22,6 +22,7 @@
 - **Action**: on a lesson slide and a problem section, switch Presenter view and Student view.
 - **Expected**:
   - In both modes, learner content stays visible at problem level (goal, context, I/O).
+  - On the `variable-demo` lesson slide, the student reference trace table is visible in both modes and keeps the generic columns for `left`, `right`, `window`, `current_sum`, validity, and `best_length`.
   - In Student view, explanation-only material is hidden: trace walkthrough, reference implementation, checkpoint list, and common mistakes.
   - Presenter-only controls are hidden in Student mode.
   - In Presenter mode, checking `Presenter talking points` reveals private notes, and unchecking hides them.

@@ -7,6 +7,7 @@ export interface LessonStep {
   durationMinutes: number;
   objective: string;
   studentContext: string[];
+  referenceTable?: LessonReferenceTable;
   teacherNotes: string[];
   presenterTalkingPointGroups?: PresenterTalkingPointGroup[];
   studentMoves: string[];
@@ -67,6 +68,13 @@ type PresenterExpansion = {
 type PresenterTalkingPointGroup = {
   heading: string;
   points: PresenterExpansion[];
+};
+
+export type LessonReferenceTable = {
+  title: string;
+  caption?: string;
+  columns: string[];
+  rows: string[][];
 };
 
 export const lessonFlow: LessonFlowSummary = {
@@ -569,33 +577,172 @@ export const lessonFlow: LessonFlowSummary = {
         "At right=2, what should left do before this row continues?",
         "At right=3, how many left moves happen before invalid?",
       ],
+      referenceTable: {
+        title: "Trace table reference",
+        caption:
+          "Use one row for each state change. Keep `right` fixed during repeated shrinks and replace these placeholders with the actual sample values.",
+        columns: [
+          "Trace step",
+          "left",
+          "right",
+          "window",
+          "current_sum",
+          "valid?",
+          "best_length",
+        ],
+        rows: [
+          [
+            "Before add",
+            "current `left`",
+            "current `right`",
+            "current window",
+            "sum before update",
+            "check current row",
+            "best so far",
+          ],
+          [
+            "After right add",
+            "same `left`",
+            "same row `right`",
+            "old window + new right value",
+            "add entering value",
+            "ask if `current_sum >= target`",
+            "unchanged until valid",
+          ],
+          [
+            "After shrink #1",
+            "`left + 1`",
+            "same `right`",
+            "remove old left value",
+            "subtract exiting value",
+            "check trigger again",
+            "record valid candidate before invalid shrink",
+          ],
+          [
+            "After shrink #2+",
+            "repeat while needed",
+            "same `right`",
+            "keep shortening same row",
+            "keep subtracting from left",
+            "stop only when trigger is false",
+            "keep best valid length",
+          ],
+          [
+            "Stable row",
+            "final `left`",
+            "same `right`",
+            "window before next right move",
+            "final sum for this row",
+            "ready for next expansion",
+            "best so far",
+          ],
+        ],
+      },
       presenterTalkingPointGroups: [
         {
-          heading: "Trace coaching",
+          heading: "Slide setup and pattern",
           points: [
             {
-              bullet: "Use this sample as a live row-by-row trace.",
+              bullet: "Open by framing the slide and the sample.",
               expansion: [
-                "Start with row 0: right=0, window includes only `2`.",
-                "Row1 and row2: add each new value then check shrink trigger.",
-                "At right=2, left moves once from 0->1 and then row continues.",
+                "This is the `Multi-shrink demo`, a 10-minute trace whose goal is to keep repeated shrinking and best updates visible.",
+                "Use the sample `blocks=[2,1,5,2,3,2]` with `target=7`.",
+                "Have students keep a trace table with `left`, `right`, `current_sum`, and `best_length`, and mark which rows are valid.",
+                "Name the pattern in student language first: expand right, then while the window is valid, shrink left repeatedly.",
               ],
             },
             {
-              bullet: "What students must call out at each row.",
+              bullet: "State the trigger and the order before tracing.",
               expansion: [
-                "Old `left`, `right`, `current_sum` before update.",
-                "New values after right add.",
-                "All left moves performed while trigger is true.",
-                "Final state before moving right again.",
+                "Say the trigger out loud as `while current_sum >= target`.",
+                "Explain why this must be `while`, not `if`: one right move can force multiple left moves.",
+                "Repeat the fixed timing language: right expands first, best is recorded while the window is still valid, then left shrinks, and only after the loop ends does right move again.",
+                "Warn students not to move `right` while the shrink condition is still true.",
               ],
             },
             {
-              bullet: "Common pause points for explanation.",
+              bullet: "Tell students exactly what to say on every row.",
               expansion: [
-                "Pause after right expansion and after each shrink.",
-                "Say when best is recorded: right after the valid minimal candidate exists.",
-                "Do not move right while condition still asks for another shrink.",
+                "Old `left`, `right`, and `current_sum` before the update.",
+                "New `current_sum` after adding `blocks[right]`.",
+                "Every left move taken while the trigger remains true.",
+                "The final state before moving `right` again.",
+              ],
+            },
+          ],
+        },
+        {
+          heading: "Live trace walkthrough",
+          points: [
+            {
+              bullet: "Trace the first three right moves slowly.",
+              expansion: [
+                "At `right=0`, the window is `[2]`, so `current_sum=2`; it is invalid, so there is no shrink.",
+                "At `right=1`, add `1` to get `[2,1]` and `current_sum=3`; it is still invalid, so there is no shrink.",
+                "At `right=2`, add `5` to get `[2,1,5]` and `current_sum=8`; now the window is valid.",
+                "Record `best_length=3` before shrinking because the current window is still legal.",
+                "Then remove `2`, move `left` from `0` to `1`, and drop `current_sum` to `6`, which ends the shrink loop for that row.",
+              ],
+            },
+            {
+              bullet: "Make `right=3` the center of the demo.",
+              expansion: [
+                "At `right=3`, add `2` so the running sum becomes `8` again.",
+                "Record the current valid candidate of length `3` before shrinking.",
+                "First shrink: remove `1`, move `left` from `1` to `2`, and `current_sum` becomes `7`.",
+                "Pause and ask whether the trigger is still true. It is, so the loop cannot stop yet.",
+                "Record best again while the window `[5,2]` is still valid; this is where `best_length` becomes `2`.",
+                "Second shrink: remove `5`, move `left` from `2` to `3`, and `current_sum` becomes `2`, which finally breaks validity.",
+              ],
+            },
+            {
+              bullet: "Close the sample without losing the main idea.",
+              expansion: [
+                "At `right=4`, add `3` to get `current_sum=5`, so there is no shrink.",
+                "At `right=5`, add `2` to get `current_sum=7`, record a valid candidate, then shrink once and stop.",
+                "The final best answer for the sample is `2`.",
+                "Use that ending to restate the takeaway: one right step can trigger multiple left moves.",
+              ],
+            },
+          ],
+        },
+        {
+          heading: "Checks, rescue prompts, and edge cases",
+          points: [
+            {
+              bullet: "Use concrete checks tied to the trace rows.",
+              expansion: [
+                "Ask: after the `right=3` row, what are `left`, `current_sum`, and `best`?",
+                "The target answer is `left=3`, `current_sum=2`, `best=2`.",
+                "Students should be able to explain why `right` stays fixed while `left` moves multiple times in one iteration.",
+                "Keep the invariant visible: `right` never moves backward, and each left move removes exactly one element.",
+              ],
+            },
+            {
+              bullet: "Name the failure patterns while they happen.",
+              expansion: [
+                "Stopping shrink early means the second shrink row at `right=3` never happens.",
+                "Moving `right` too soon means the loop ended before the condition was fixed.",
+                "Updating best after invalidating the window loses the shortest valid window.",
+                "Losing track of validity between shrinks makes students stop on the wrong row.",
+              ],
+            },
+            {
+              bullet: "Use short recovery questions when students get stuck.",
+              expansion: [
+                "Ask: did `left` move once, or until the target condition was fixed?",
+                "Ask: what condition is still true that forces another left move?",
+                "Ask for the exact window contents after each shrink before discussing best updates.",
+                "If needed, rerun the entire `right=3` row before returning to code.",
+              ],
+            },
+            {
+              bullet: "Preview the edge cases before coding starts.",
+              expansion: [
+                "If `target=0`, the answer is `0` on the pre-check.",
+                "If the target is impossible, best never updates, so the answer is `0`.",
+                "If a single element reaches the target, the best answer should become `1`.",
+                "These checks reinforce that `0` means impossible or immediate trivial case, not partial credit.",
               ],
             },
           ],
@@ -606,7 +753,7 @@ export const lessonFlow: LessonFlowSummary = {
         "Make the key question: why did we move left twice before adding right=4?",
       ],
       studentMoves: [
-        "Write one row table: left, right, current_sum, best_length.",
+        "Write one trace table: left, right, current_sum, best_length.",
         "Mark which rows are still valid.",
       ],
       checks: [
