@@ -1,0 +1,2 @@
+- show brute force
+    - O(kn)
