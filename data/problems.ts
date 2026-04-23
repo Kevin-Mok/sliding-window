@@ -16,6 +16,7 @@ export interface SlidingWindowProblem {
   sampleInput: string;
   sampleOutput: string;
   pythonSolution: string;
+  javaSolution: string;
   explanation: string[];
   traceAscii: string[];
   timeComplexity: string;
@@ -71,6 +72,38 @@ k = 3`,
         best_total_steps = max(best_total_steps, cur_total_steps)
 
     return best_total_steps`,
+    javaSolution: `public static Integer bestKDaySteps(int[] steps, int k) {
+    // Fixed-size window: it must have at least one day,
+    // and cannot be longer than the input length.
+    if (k <= 0 || k > steps.length) {
+        return null;
+    }
+
+    int left = 0;
+    // Right is inclusive, so the first window ends at index k - 1.
+    int right = k - 1;
+    // Build the first full window once, then reuse it on each slide.
+    int curTotalSteps = 0;
+    for (int index = left; index <= right; index++) {
+        curTotalSteps += steps[index];
+    }
+    // The initial full window is your starting best.
+    int bestTotalSteps = curTotalSteps;
+    // Stop before right would move past the array end.
+    while (right < steps.length - 1) {
+        // Slide order: remove old left, move both pointers,
+        // then add the new right value.
+        // This keeps window size fixed at k.
+        curTotalSteps -= steps[left];
+        left += 1;
+        right += 1;
+        curTotalSteps += steps[right];
+        // Compare this reused window total against best so far.
+        bestTotalSteps = Math.max(bestTotalSteps, curTotalSteps);
+    }
+
+    return bestTotalSteps;
+}`,
     explanation: [
       "Read the prompt and confirm this is a fixed-size window.",
       "Set `left = 0` and `right = k - 1` so the first full `k`-day window is indices `0` through `k - 1`.",
@@ -144,6 +177,39 @@ target = 7`,
         return 0
 
     return best_length`,
+    javaSolution: `public static int shortestStudySprint(int[] blocks, int target) {
+    int left = 0;
+    // Running sum for the current window from left through right.
+    int currentSum = 0;
+    // Sentinel: if this never changes, no valid window exists.
+    int bestLength = blocks.length + 1;
+
+    for (int right = 0; right < blocks.length; right++) {
+        // Expand the window by adding the new right value.
+        currentSum += blocks[right];
+
+        // Variable-size sliding window:
+        // while this window already meets the target,
+        // shrink from the left to find a shorter valid answer.
+        while (currentSum >= target) {
+            // Measure this valid window before we shrink it.
+            int currentLength = right - left + 1;
+            bestLength = Math.min(bestLength, currentLength);
+
+            // Remove the old left value, then move left forward.
+            // This reuses the previous window sum instead of rescanning.
+            currentSum -= blocks[left];
+            left += 1;
+        }
+    }
+
+    // If the sentinel never changed, no consecutive block reached the target.
+    if (bestLength == blocks.length + 1) {
+        return 0;
+    }
+
+    return bestLength;
+}`,
     explanation: [
       "Expand with `right`, adding each value to `current_sum`.",
       "While the window is valid (`current_sum >= target`), shrink from `left`.",
@@ -189,29 +255,85 @@ target = 7`,
 k = 2`,
     sampleOutput: "5",
     pythonSolution: `def longest_code_with_limited_symbols(code, k):
+    # Variable-size sliding window for at most k distinct symbols.
     if k <= 0:
+        # Empty or zero-capacity constraints cannot contain any valid window.
         return 0
 
+    # Left boundary of the current window.
     left = 0
+    # Frequency map for active characters in the current window.
     counts = {}
+    # Track best valid window length found so far.
     best_length = 0
 
     for right, char in enumerate(code):
+        # Expand window: include the new right character.
         counts[char] = counts.get(char, 0) + 1
 
+        # Keep shrinking while the number of distinct active symbols is too high.
         while len(counts) > k:
+            # Character leaving from the left boundary.
             left_char = code[left]
+            # Decrement the leaving character count.
             counts[left_char] -= 1
 
+            # Drop zero-count keys so len(counts) stays meaningful.
             if counts[left_char] == 0:
                 del counts[left_char]
 
+            # Move left forward one step to restore the at-most-k invariant.
             left += 1
 
+        # Current window [left, right] is now valid (<= k distinct).
         current_length = right - left + 1
+        # Record best length if this one is longer.
         best_length = max(best_length, current_length)
 
+    # Return the maximum window length satisfying the constraint.
     return best_length`,
+    javaSolution: `public static int longestCodeWithLimitedSymbols(String code, int k) {
+    // Constraint is at most k distinct symbols.
+    if (k <= 0) {
+        return 0;
+    }
+
+    int left = 0;
+    // Frequency map for active characters in the current window.
+    Map<Character, Integer> counts = new HashMap<>();
+    // Track max valid window length found so far.
+    int bestLength = 0;
+
+    for (int right = 0; right < code.length(); right++) {
+        char currentChar = code.charAt(right);
+        // Expand window: include the new right character.
+        counts.put(currentChar, counts.getOrDefault(currentChar, 0) + 1);
+
+        // Keep shrinking while we have too many active symbols.
+        while (counts.size() > k) {
+            // Character leaving from the left boundary.
+            char leftChar = code.charAt(left);
+            // Decrement its count after it leaves.
+            counts.put(leftChar, counts.get(leftChar) - 1);
+
+            // Remove zero-count keys so size reflects active distinct symbols.
+            if (counts.get(leftChar) == 0) {
+                counts.remove(leftChar);
+            }
+
+            // Move left forward one step to restore the at-most-k invariant.
+            left += 1;
+        }
+
+        // Current window [left, right] is now valid (<= k distinct).
+        int currentLength = right - left + 1;
+        // Record best length if this one is longer.
+        bestLength = Math.max(bestLength, currentLength);
+    }
+
+    // Return the maximum window length satisfying the constraint.
+    return bestLength;
+}`,
     explanation: [
       "Use a fixed-size map of characters for frequency in the current window.",
       "When too many distinct characters exist, shrink from left.",
@@ -299,6 +421,63 @@ required = ["a", "b", "c"]`,
         return ""
 
     return announcement[best_start:best_start + best_length]`,
+    javaSolution: `public static String smallestAnnouncementClip(String announcement, String[] required) {
+    Set<Character> needed = new HashSet<>();
+    // Store required characters for O(1) membership checks.
+    for (String charValue : required) {
+        if (!charValue.isEmpty()) {
+            needed.add(charValue.charAt(0));
+        }
+    }
+
+    if (needed.isEmpty()) {
+        return "";
+    }
+
+    int left = 0;
+    // Frequency map for required characters in the current window.
+    Map<Character, Integer> counts = new HashMap<>();
+    // Number of required characters currently present at least once.
+    int have = 0;
+
+    int bestLength = Integer.MAX_VALUE;
+    int bestStart = 0;
+
+    for (int right = 0; right < announcement.length(); right++) {
+        char currentChar = announcement.charAt(right);
+        if (needed.contains(currentChar)) {
+            counts.put(currentChar, counts.getOrDefault(currentChar, 0) + 1);
+            if (counts.get(currentChar) == 1) {
+                have += 1;
+            }
+        }
+
+        while (have == needed.size()) {
+            int currentLength = right - left + 1;
+
+            if (currentLength < bestLength) {
+                bestLength = currentLength;
+                bestStart = left;
+            }
+
+            char leftChar = announcement.charAt(left);
+            if (needed.contains(leftChar)) {
+                counts.put(leftChar, counts.get(leftChar) - 1);
+                if (counts.get(leftChar) == 0) {
+                    have -= 1;
+                }
+            }
+
+            left += 1;
+        }
+    }
+
+    if (bestLength == Integer.MAX_VALUE) {
+        return "";
+    }
+
+    return announcement.substring(bestStart, bestStart + bestLength);
+}`,
     explanation: [
       "Track a set for O(1) required membership.",
       "Track frequencies for required chars currently in window.",

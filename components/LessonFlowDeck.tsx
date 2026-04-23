@@ -13,6 +13,7 @@ import {
 
 type AudienceMode = "presenter" | "student";
 type ProblemPhase = "precontext" | "student-work" | "explanation";
+type SolutionLanguage = "python" | "java";
 
 type LessonSlide =
   | {
@@ -123,6 +124,9 @@ export function LessonFlowDeck() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [checkStates, setCheckStates] = useState<
     Record<string, Record<string, boolean>>
+  >({});
+  const [problemLanguageBySlug, setProblemLanguageBySlug] = useState<
+    Record<string, SolutionLanguage>
   >({});
 
   const slides = useMemo<LessonSlide[]>(() => {
@@ -275,6 +279,14 @@ export function LessonFlowDeck() {
   const activeProblem = activeProblemSlug
     ? getProblemBySlug(activeProblemSlug)
     : undefined;
+  const activeProblemLanguage =
+    activeProblemSlug && problemLanguageBySlug[activeProblemSlug]
+      ? problemLanguageBySlug[activeProblemSlug]
+      : "python";
+  const activeProblemSolution =
+    activeProblem && activeProblemLanguage === "java"
+      ? activeProblem.javaSolution
+      : activeProblem?.pythonSolution ?? "";
   const activeWorkshop = activeSlide.kind === "problem" ? activeSlide.problem : undefined;
   const activeProblemIndex = activeProblemSlug
     ? slides.findIndex(
@@ -297,6 +309,14 @@ export function LessonFlowDeck() {
     activeSlide.kind !== "problem" ||
     isProblemPromptPhaseForStudents ||
     isProblemInstructorExplanationOnly;
+
+  const setActiveProblemLanguage = (language: SolutionLanguage) => {
+    if (!activeProblemSlug) return;
+    setProblemLanguageBySlug((previous) => ({
+      ...previous,
+      [activeProblemSlug]: language,
+    }));
+  };
 
   const goToProblemPhase = (phaseIndex: number) => {
     if (activeProblemIndex < 0) return;
@@ -731,8 +751,29 @@ export function LessonFlowDeck() {
                       </p>
                     </section>
                     <section className="content-section workshop-code">
-                      <h4>Reference implementation</h4>
-                      <CodeBlock code={activeProblem.pythonSolution} />
+                      <div className="reveal-controls">
+                        <h4>Reference implementation</h4>
+                        <div className="reveal-controls__actions">
+                          <button
+                            type="button"
+                            className={`chip ${activeProblemLanguage === "python" ? "chip--active" : ""}`}
+                            onClick={() => setActiveProblemLanguage("python")}
+                          >
+                            Python
+                          </button>
+                          <button
+                            type="button"
+                            className={`chip ${activeProblemLanguage === "java" ? "chip--active" : ""}`}
+                            onClick={() => setActiveProblemLanguage("java")}
+                          >
+                            Java
+                          </button>
+                        </div>
+                      </div>
+                      <CodeBlock
+                        code={activeProblemSolution}
+                        language={activeProblemLanguage}
+                      />
                     </section>
                     <section className="content-section workshop-checks">
                       <h4>Checkpoint checklist</h4>
